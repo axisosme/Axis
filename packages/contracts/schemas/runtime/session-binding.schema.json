@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/session-binding.schema.json",
+  "title": "Axis Runtime Session Binding 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "sessionBindingId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "taskId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "attemptId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "runId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "workerId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "executorId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "nativeSessionRef": { "$ref": "common.schema.json#/$defs/nativeSessionRef" }
+  },
+  "required": ["contractVersion", "sessionBindingId", "taskId", "attemptId", "runId", "correlationId", "workerId", "executorId"],
+  "additionalProperties": false
+}

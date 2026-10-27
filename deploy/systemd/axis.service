@@ -1,0 +1,34 @@
+[Unit]
+Description=Axis single-host service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=axis
+Group=axis
+WorkingDirectory=/var/lib/axis
+Environment=HOME=/var/lib/axis/home
+Environment=CODEX_HOME=/var/lib/axis/codex
+Environment=PATH=/opt/axis/node_modules/.bin:/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/etc/axis/axis.env
+ExecStart=/usr/bin/node /opt/axis/dist/bin/axis.js serve --config /etc/axis/axis.toml
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+KillMode=mixed
+UMask=0077
+StateDirectory=axis
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/axis
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

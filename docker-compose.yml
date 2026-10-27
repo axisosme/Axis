@@ -1,0 +1,28 @@
+services:
+  axis:
+    build:
+      context: .
+    image: axis:local
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      LINEAR_CLIENT_SECRET: ${LINEAR_CLIENT_SECRET:-}
+      LINEAR_WEBHOOK_SECRET: ${LINEAR_WEBHOOK_SECRET:-}
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - axis-data:/var/lib/axis
+      - type: bind
+        source: ./axis.toml
+        target: /etc/axis/axis.toml
+        read_only: true
+        bind:
+          create_host_path: false
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  axis-data:

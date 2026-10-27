@@ -1,0 +1,56 @@
+{
+  "contractVersion": "1.0.0",
+  "waiting": {
+    "deliveryTypes": [
+      "executor_agent_waiting",
+      "run_agent_waiting",
+      "task_agent_waiting"
+    ],
+    "validFixtures": [
+      "valid/executor-waiting.json",
+      "valid/run-waiting.json",
+      "valid/task-waiting.json",
+      "valid/run-waiting-linear.json",
+      "valid/run-waiting-fixed-choice.json"
+    ],
+    "requiredMutations": [
+      "mismatched-conversation",
+      "activity-id-only-change-is-duplicate",
+      "conversation-identity-participates-in-canonical-tuple",
+      "coherent-elicitation-content-drift-is-conflict",
+      "other-capability-mismatch",
+      "other-option-id-collision",
+      "other-reply-value-collision",
+      "recommended-other",
+      "coherent-other-content-drift-is-conflict"
+    ]
+  },
+  "response": {
+    "deliveryTypes": [
+      "executor_agent_response",
+      "run_agent_response",
+      "task_agent_response"
+    ],
+    "validFixtures": [
+      "valid/executor-response.json",
+      "valid/run-response.json",
+      "valid/task-response.json",
+      "valid/run-response-session.json",
+      "valid/task-fallback.json"
+    ],
+    "requiredMutations": [
+      "unknown-envelope-version-rejected",
+      "mismatched-conversation",
+      "result-ref-must-match-envelope",
+      "activity-id-only-change-is-duplicate",
+      "conversation-identity-participates-in-canonical-tuple",
+      "coherent-body-drift-is-conflict",
+      "fallback-body-must-be-the-neutral-constant",
+      "truncation-marker-without-record",
+      "truncation-record-without-marker",
+      "truncation-counts-must-be-coherent",
+      "task-level-unbound-attempt-does-not-key-identity",
+      "semantically-incoherent-nested-envelope-rejected"
+    ]
+  }
+}

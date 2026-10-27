@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability privately
+    url: https://github.com/axisosme/Axis/blob/main/SECURITY.md
+    about: Follow SECURITY.md to use GitHub private vulnerability reporting; do not open a public issue.

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/run.schema.json",
+  "title": "Axis Runtime Run 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "runId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "taskId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "attemptId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "sessionBindingId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "state": { "$ref": "common.schema.json#/$defs/runtimeState" },
+    "error": { "$ref": "common.schema.json#/$defs/runtimeError" },
+    "resultRef": { "$ref": "common.schema.json#/$defs/resultRef" },
+    "elicitation": { "$ref": "common.schema.json#/$defs/structuredElicitation" },
+    "priorRunId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }
+  },
+  "required": ["contractVersion", "runId", "taskId", "attemptId", "sessionBindingId", "correlationId", "state"],
+  "additionalProperties": false
+}

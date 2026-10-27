@@ -1,0 +1,85 @@
+{
+  "name": "@axisosme/axis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/contracts"
+  ],
+  "bundleDependencies": [
+    "@axisosme/axis-contracts"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./linear": {
+      "types": "./dist/shared/linear-sdk.d.ts",
+      "default": "./dist/shared/linear-sdk.js"
+    }
+  },
+  "bin": {
+    "axis": "./dist/bin/axis.js",
+    "axis-linear-cli": "./dist/bin/linear-cli.js",
+    "axis-claude-worker": "./dist/bin/claude-worker.js",
+    "axis-linear-relay": "./dist/bin/relay.js",
+    "axis-codex-worker": "./dist/bin/worker.js",
+    "axis-node": "./dist/bin/node.js",
+    "axis-routing-preflight": "./dist/bin/routing-preflight.js"
+  },
+  "files": [
+    "dist",
+    "axis.example.toml",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "openapi.yaml",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @axisosme/axis-contracts && tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run test:relay",
+    "test:relay": "node --import=tsx --experimental-test-module-mocks --test-timeout=180000 --test \"test/relay/**/*.test.ts\"",
+    "test:node:e2e": "node --import=tsx --experimental-test-module-mocks --test-timeout=300000 --test \"test/e2e/**/*.test.ts\"",
+    "test:node": "node --import=tsx --experimental-test-module-mocks --test-timeout=180000 --test \"test/node/**/*.test.ts\" && npm run test:node:e2e",
+    "test:smoke": "node --import=tsx test/smoke.ts",
+    "test:bins": "node scripts/check-production-bins.mjs",
+    "test:linear-live": "npm run build --silent && node scripts/live-linear-smoke.mjs",
+    "test:claude-live": "npm run build --silent && node scripts/live-claude-worker-smoke.mjs",
+    "test:git-install": "node scripts/check-git-install.mjs",
+    "check:deps": "node scripts/check-dependency-pins.mjs",
+    "check:scripts": "node --check scripts/check-dependency-pins.mjs && node --check scripts/package-surface-guardrails.mjs && node --check scripts/check-package-surface-guardrails.mjs && node --check scripts/check-package.mjs && node --check scripts/check-git-install.mjs && node --check scripts/check-production-bins.mjs && node --check scripts/write-smoke-configuration.mjs && node --check scripts/installed-node-smoke.mjs && node --check scripts/live-node-smoke.mjs && node --check scripts/live-claude-worker-smoke.mjs && node --check scripts/check-test-registration.mjs && node --check scripts/check-test-citations.mjs && node --check scripts/checked-search.mjs && node --check scripts/merged-by-symbol.mjs && node --check scripts/check-environment.mjs && node --check scripts/git-ref-support.mjs && node scripts/check-package-surface-guardrails.mjs --source-only && node scripts/check-test-registration.mjs && node scripts/check-test-citations.mjs",
+    "check:surface": "node scripts/check-package-surface-guardrails.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "check:environment": "node scripts/check-environment.mjs",
+    "check": "npm run check:static && npm test && npm run test:node && npm run check:distribution",
+    "check:static": "npm run check:environment && npm run check:deps && npm run check:scripts && npm run build && npm run check:surface && npm run lint",
+    "check:distribution": "npm run test:bins && npm run check:package && npm run test:git-install && npm run test:smoke",
+    "preflight:node-routing": "npm run build --silent && node dist/bin/routing-preflight.js"
+  },
+  "dependencies": {
+    "@axisosme/axis-contracts": "0.1.0",
+    "@linear/sdk": "95.0.0",
+    "@openai/codex": "0.153.4",
+    "graphql": "16.14.2",
+    "smol-toml": "1.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "tsx": "4.20.6",
+    "typescript": "7.0.2"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axisosme/Axis.git"
+  }
+}

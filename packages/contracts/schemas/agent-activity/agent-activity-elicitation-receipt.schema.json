@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/agent-activity/agent-activity-elicitation-receipt.schema.json",
+  "title": "Axis Agent Activity Elicitation Receipt 1.0.0",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "linearConversationIdentity": {
+      "type": "object",
+      "properties": {
+        "system": { "const": "linear" },
+        "agentSessionId": { "$ref": "#/$defs/id" }
+      },
+      "required": ["system", "agentSessionId"],
+      "additionalProperties": false
+    },
+    "conversationIdentity": { "$ref": "#/$defs/linearConversationIdentity" },
+    "elicitationReceipt": {
+      "type": "object",
+      "properties": {
+        "contractVersion": { "const": "1.0.0" },
+        "activityId": { "$ref": "#/$defs/id" },
+        "taskId": { "$ref": "#/$defs/id" },
+        "attemptId": { "$ref": "#/$defs/id" },
+        "runId": { "$ref": "#/$defs/id" },
+        "conversation": { "$ref": "#/$defs/conversationIdentity" },
+        "sourceEventId": { "$ref": "#/$defs/id" },
+        "operationId": { "$ref": "#/$defs/id" },
+        "elicitation": { "$ref": "https://github.com/axisosme/Axis/schemas/runtime/common.schema.json#/$defs/structuredElicitation" }
+      },
+      "required": [
+        "contractVersion",
+        "activityId",
+        "taskId",
+        "attemptId",
+        "runId",
+        "conversation",
+        "sourceEventId",
+        "operationId",
+        "elicitation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/elicitationReceipt"
+}

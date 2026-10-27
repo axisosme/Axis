@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/task.schema.json",
+  "title": "Axis Runtime Task 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "taskId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "sourceRef": { "$ref": "common.schema.json#/$defs/sourceRef" }
+  },
+  "required": ["contractVersion", "taskId", "correlationId", "sourceRef"],
+  "additionalProperties": false
+}

@@ -1,0 +1,237 @@
+{
+  "provenance": {
+    "description": "Current Linear flag-off baseline for a follow-up on a running Run.",
+    "scenario": "test/support/router-interrupt-scenario.ts",
+    "nativeSteer": false,
+    "writer": "Router.startNode and Router.continueNode through NodeDispatchDouble",
+    "generator": "test/fixtures/router-interrupt/generate-flag-off-golden.mts"
+  },
+  "record": {
+    "requests": [
+      {
+        "contractVersion": "1.0.0",
+        "nodeRef": {
+          "ref": "node-native-steer",
+          "version": "v1"
+        },
+        "target": {
+          "selection": {
+            "kind": "policy",
+            "scope": {
+              "system": "linear",
+              "tenantId": "tenant-1",
+              "scopeId": "team-1"
+            },
+            "executorLabels": []
+          }
+        },
+        "command": {
+          "contractVersion": "1.0.0",
+          "commandId": "native-steer-start",
+          "command": "start",
+          "start": {
+            "causationMessageId": "native-steer-start",
+            "consumer": "worker",
+            "contractVersion": "1.0.0",
+            "correlationId": "native-steer-id-3",
+            "envelopeType": "run.start",
+            "identity": {
+              "attempt": {
+                "attemptId": "native-steer-id-2",
+                "contractVersion": "1.0.0",
+                "correlationId": "native-steer-id-3",
+                "taskId": "native-steer-id-1"
+              },
+              "contractVersion": "1.0.0",
+              "run": {
+                "attemptId": "native-steer-id-2",
+                "contractVersion": "1.0.0",
+                "correlationId": "native-steer-id-3",
+                "runId": "native-steer-id-5",
+                "sessionBindingId": "native-steer-id-6",
+                "state": "pending",
+                "taskId": "native-steer-id-1"
+              },
+              "sessionBinding": {
+                "attemptId": "native-steer-id-2",
+                "contractVersion": "1.0.0",
+                "correlationId": "native-steer-id-3",
+                "runId": "native-steer-id-5",
+                "sessionBindingId": "native-steer-id-6",
+                "taskId": "native-steer-id-1"
+              },
+              "task": {
+                "contractVersion": "1.0.0",
+                "correlationId": "native-steer-id-3",
+                "sourceRef": {
+                  "agentSessionId": "session-native-steer",
+                  "issueId": "issue-native-steer",
+                  "organizationId": "organization-native-steer",
+                  "system": "linear"
+                },
+                "taskId": "native-steer-id-1"
+              }
+            },
+            "messageId": "native-steer-id-7",
+            "occurredAt": "2026-09-24T00:00:02.000Z",
+            "operationId": "native-steer-id-4",
+            "producer": "router"
+          },
+          "instruction": "Do the work.",
+          "workspacePolicyRef": null
+        }
+      },
+      {
+        "contractVersion": "1.0.0",
+        "nodeRef": {
+          "ref": "node-native-steer",
+          "version": "v1"
+        },
+        "target": {
+          "selection": {
+            "kind": "policy",
+            "scope": {
+              "system": "linear",
+              "tenantId": "tenant-1",
+              "scopeId": "team-1"
+            },
+            "executorLabels": []
+          }
+        },
+        "command": {
+          "contractVersion": "1.0.0",
+          "commandId": "native-steer-id-8",
+          "command": "cancel",
+          "target": {
+            "runId": "native-steer-id-5"
+          }
+        }
+      }
+    ],
+    "workerCommands": [
+      {
+        "contractVersion": "1.0.0",
+        "commandId": "native-steer-start",
+        "command": "start",
+        "start": {
+          "causationMessageId": "native-steer-start",
+          "consumer": "worker",
+          "contractVersion": "1.0.0",
+          "correlationId": "native-steer-id-3",
+          "envelopeType": "run.start",
+          "identity": {
+            "attempt": {
+              "attemptId": "native-steer-id-2",
+              "contractVersion": "1.0.0",
+              "correlationId": "native-steer-id-3",
+              "taskId": "native-steer-id-1"
+            },
+            "contractVersion": "1.0.0",
+            "run": {
+              "attemptId": "native-steer-id-2",
+              "contractVersion": "1.0.0",
+              "correlationId": "native-steer-id-3",
+              "runId": "native-steer-id-5",
+              "sessionBindingId": "native-steer-id-6",
+              "state": "pending",
+              "taskId": "native-steer-id-1"
+            },
+            "sessionBinding": {
+              "attemptId": "native-steer-id-2",
+              "contractVersion": "1.0.0",
+              "correlationId": "native-steer-id-3",
+              "runId": "native-steer-id-5",
+              "sessionBindingId": "native-steer-id-6",
+              "taskId": "native-steer-id-1",
+              "workerId": "worker-native-steer",
+              "executorId": "executor-native-steer"
+            },
+            "task": {
+              "contractVersion": "1.0.0",
+              "correlationId": "native-steer-id-3",
+              "sourceRef": {
+                "agentSessionId": "session-native-steer",
+                "issueId": "issue-native-steer",
+                "organizationId": "organization-native-steer",
+                "system": "linear"
+              },
+              "taskId": "native-steer-id-1"
+            }
+          },
+          "messageId": "native-steer-id-7",
+          "occurredAt": "2026-09-24T00:00:02.000Z",
+          "operationId": "native-steer-id-4",
+          "producer": "router"
+        },
+        "instruction": "Do the work.",
+        "workspacePolicyRef": null,
+        "executionTarget": {
+          "identity": {
+            "nodeId": "node-native-steer",
+            "workerId": "worker-native-steer",
+            "executorKind": "scripted",
+            "runtimeProfile": {
+              "ref": "executor-native-steer",
+              "version": "v1"
+            }
+          },
+          "sessionBindingExecutorId": "executor-native-steer"
+        }
+      },
+      {
+        "contractVersion": "1.0.0",
+        "commandId": "native-steer-id-8",
+        "command": "cancel",
+        "target": {
+          "runId": "native-steer-id-5"
+        }
+      }
+    ],
+    "results": [
+      {
+        "commandId": "native-steer-start",
+        "taskId": "native-steer-id-1",
+        "runId": "native-steer-id-5",
+        "status": "accepted"
+      },
+      {
+        "commandId": "native-steer-follow-up",
+        "taskId": "native-steer-id-1",
+        "runId": "native-steer-id-5",
+        "status": "interrupt_requested"
+      }
+    ],
+    "commandRows": [
+      {
+        "command_id": "native-steer-start",
+        "node_command_id": "native-steer-start",
+        "kind": "start",
+        "task_id": "native-steer-id-1",
+        "run_id": "native-steer-id-5",
+        "intent_json": "{\"caller\":{\"agentSessionId\":\"session-native-steer\",\"commandId\":\"native-steer-start\",\"instructionSha256\":\"sha256:2048027dc7ced3c3a0a4db24725f20b9154a0b2158d64475bcaf79ba1a67b233\",\"issueId\":\"issue-native-steer\",\"kind\":\"start\",\"organizationId\":\"organization-native-steer\",\"teamId\":\"team-native-steer\"},\"nodeCommand\":{\"command\":{\"command\":\"start\",\"commandId\":\"native-steer-start\",\"contractVersion\":\"1.0.0\",\"instructionSha256\":\"sha256:2048027dc7ced3c3a0a4db24725f20b9154a0b2158d64475bcaf79ba1a67b233\",\"start\":{\"causationMessageId\":\"native-steer-start\",\"consumer\":\"worker\",\"contractVersion\":\"1.0.0\",\"correlationId\":\"native-steer-id-3\",\"envelopeType\":\"run.start\",\"identity\":{\"attempt\":{\"attemptId\":\"native-steer-id-2\",\"contractVersion\":\"1.0.0\",\"correlationId\":\"native-steer-id-3\",\"taskId\":\"native-steer-id-1\"},\"contractVersion\":\"1.0.0\",\"run\":{\"attemptId\":\"native-steer-id-2\",\"contractVersion\":\"1.0.0\",\"correlationId\":\"native-steer-id-3\",\"runId\":\"native-steer-id-5\",\"sessionBindingId\":\"native-steer-id-6\",\"state\":\"pending\",\"taskId\":\"native-steer-id-1\"},\"sessionBinding\":{\"attemptId\":\"native-steer-id-2\",\"contractVersion\":\"1.0.0\",\"correlationId\":\"native-steer-id-3\",\"runId\":\"native-steer-id-5\",\"sessionBindingId\":\"native-steer-id-6\",\"taskId\":\"native-steer-id-1\"},\"task\":{\"contractVersion\":\"1.0.0\",\"correlationId\":\"native-steer-id-3\",\"sourceRef\":{\"agentSessionId\":\"session-native-steer\",\"issueId\":\"issue-native-steer\",\"organizationId\":\"organization-native-steer\",\"system\":\"linear\"},\"taskId\":\"native-steer-id-1\"}},\"messageId\":\"native-steer-id-7\",\"occurredAt\":\"2026-09-24T00:00:02.000Z\",\"operationId\":\"native-steer-id-4\",\"producer\":\"router\"},\"workspacePolicyRef\":null},\"contractVersion\":\"1.0.0\",\"nodeRef\":{\"ref\":\"node-native-steer\",\"version\":\"v1\"},\"target\":{\"selection\":{\"executorLabels\":[],\"kind\":\"policy\",\"scope\":{\"scopeId\":\"team-1\",\"system\":\"linear\",\"tenantId\":\"tenant-1\"}}}},\"nodeCommandIntentDigest\":\"sha256:66b38088163a97c49ff326a13bdeaac235ccffca92400d29337bbe1fd6ef7beb\"}",
+        "intent_digest": "sha256:54a3342165c1d2b091a414e195652d89d7c806f63722729bf9fe43d4080270d5",
+        "state": "accepted",
+        "reservation_json": "{\"target\":{\"endpointRef\":{\"ref\":\"endpoint-native-steer\",\"version\":\"v1\"},\"identity\":{\"executorKind\":\"scripted\",\"nodeId\":\"node-native-steer\",\"runtimeProfile\":{\"ref\":\"executor-native-steer\",\"version\":\"v1\"},\"workerId\":\"worker-native-steer\"},\"sessionBindingExecutorId\":\"executor-native-steer\"},\"workerKey\":\"worker-key-native-steer\"}",
+        "receipt_digest": "sha256:5da57cd1b14dae7dfd2aef40b261f8d20e7dcdba174fe2bf26e17eafe1747b9f",
+        "result_json": "{\"commandId\":\"native-steer-start\",\"runId\":\"native-steer-id-5\",\"status\":\"accepted\",\"taskId\":\"native-steer-id-1\"}",
+        "created_at": "2026-09-24T00:00:02.000Z",
+        "updated_at": "2026-09-24T00:00:02.000Z"
+      },
+      {
+        "command_id": "native-steer-follow-up",
+        "node_command_id": "native-steer-id-8",
+        "kind": "continue",
+        "task_id": "native-steer-id-1",
+        "run_id": "native-steer-id-5",
+        "intent_json": "{\"caller\":{\"agentSessionId\":\"session-native-steer\",\"commandId\":\"native-steer-follow-up\",\"instructionSha256\":\"sha256:8854f946fcba3d8fe14c16b9bf9b1afab3e4bad4983a263928fa0fdf48b72cf5\",\"issueId\":\"issue-native-steer\",\"kind\":\"continue\",\"organizationId\":\"organization-native-steer\",\"teamId\":\"team-native-steer\"},\"nodeCommand\":{\"command\":{\"command\":\"cancel\",\"commandId\":\"native-steer-id-8\",\"contractVersion\":\"1.0.0\",\"target\":{\"runId\":\"native-steer-id-5\"}},\"contractVersion\":\"1.0.0\",\"nodeRef\":{\"ref\":\"node-native-steer\",\"version\":\"v1\"},\"target\":{\"selection\":{\"executorLabels\":[],\"kind\":\"policy\",\"scope\":{\"scopeId\":\"team-1\",\"system\":\"linear\",\"tenantId\":\"tenant-1\"}}}},\"nodeCommandIntentDigest\":\"sha256:e97e2042fc53b6f1671488499bc64b6e4040fe30e67a544649985a5dd7a07712\"}",
+        "intent_digest": "sha256:6721c5559e8209b588acbddeee778744d1914055cb670808032b8c74cf330450",
+        "state": "accepted",
+        "reservation_json": "{\"target\":{\"endpointRef\":{\"ref\":\"endpoint-native-steer\",\"version\":\"v1\"},\"identity\":{\"executorKind\":\"scripted\",\"nodeId\":\"node-native-steer\",\"runtimeProfile\":{\"ref\":\"executor-native-steer\",\"version\":\"v1\"},\"workerId\":\"worker-native-steer\"},\"sessionBindingExecutorId\":\"executor-native-steer\"},\"workerKey\":\"worker-key-native-steer\"}",
+        "receipt_digest": "sha256:38770b1f2f49aec9a8a43f2faf455a372537abec7731cad9ce4720cc124c52ba",
+        "result_json": "{\"commandId\":\"native-steer-follow-up\",\"runId\":\"native-steer-id-5\",\"status\":\"interrupt_requested\",\"taskId\":\"native-steer-id-1\"}",
+        "created_at": "2026-09-24T00:00:02.000Z",
+        "updated_at": "2026-09-24T00:00:02.000Z"
+      }
+    ]
+  }
+}

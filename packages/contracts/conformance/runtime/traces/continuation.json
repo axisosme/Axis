@@ -1,0 +1,905 @@
+{
+  "traceVersion": "1.0.0",
+  "contractVersion": "1.0.0",
+  "traceId": "continuation",
+  "expectedOutcome": "succeeded",
+  "messages": [
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-submit-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "occurredAt": "2026-08-25T00:03:00Z",
+      "submitIdempotencyKey": "g-submit-1-key",
+      "producer": "relay",
+      "consumer": "router",
+      "envelopeType": "task.submit",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-run-start-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-submit-1",
+      "occurredAt": "2026-08-25T00:03:01Z",
+      "producer": "router",
+      "consumer": "worker",
+      "envelopeType": "run.start",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-1",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "sessionBindingId": "continuation-binding-1",
+          "correlationId": "gc1",
+          "state": "pending"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "runId": "continuation-run-1",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-executor-start-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-run-start-1",
+      "occurredAt": "2026-08-25T00:03:02Z",
+      "producer": "worker",
+      "consumer": "codex-adapter",
+      "envelopeType": "executor.start",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-1",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "sessionBindingId": "continuation-binding-1",
+          "correlationId": "gc1",
+          "state": "pending"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "runId": "continuation-run-1",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      },
+      "capability": "codex.execute"
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-executor-accepted-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-start-1",
+      "occurredAt": "2026-08-25T00:03:03Z",
+      "producer": "codex-adapter",
+      "consumer": "worker",
+      "envelopeType": "executor.accepted",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-1",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "sessionBindingId": "continuation-binding-1",
+          "correlationId": "gc1",
+          "state": "pending"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "runId": "continuation-run-1",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-run-accepted-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-accepted-1",
+      "occurredAt": "2026-08-25T00:03:04Z",
+      "producer": "worker",
+      "consumer": "router",
+      "envelopeType": "run.accepted",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "attempt": {
+        "contractVersion": "1.0.0",
+        "attemptId": "continuation-attempt-1",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1"
+      },
+      "run": {
+        "contractVersion": "1.0.0",
+        "runId": "continuation-run-1",
+        "taskId": "continuation-task-1",
+        "attemptId": "continuation-attempt-1",
+        "sessionBindingId": "continuation-binding-1",
+        "correlationId": "gc1",
+        "state": "pending"
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-task-accepted-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-run-accepted-1",
+      "occurredAt": "2026-08-25T00:03:05Z",
+      "producer": "router",
+      "consumer": "relay",
+      "envelopeType": "task.accepted",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "run": {
+        "runId": "continuation-run-1",
+        "state": "pending"
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-executor-waiting-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-accepted-1",
+      "occurredAt": "2026-08-25T00:03:06Z",
+      "producer": "codex-adapter",
+      "consumer": "worker",
+      "envelopeType": "executor.waiting_for_input",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-1",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "sessionBindingId": "continuation-binding-1",
+          "correlationId": "gc1",
+          "state": "waiting_for_input",
+          "elicitation": {
+            "decisionId": "decision-1",
+            "sourceEventId": "event-1",
+            "recommendedOptionId": "opt-a",
+            "header": "Which approach?",
+            "question": "Pick a path forward.",
+            "options": [
+              {
+                "optionId": "opt-a",
+                "replyValue": "a",
+                "label": "Option A",
+                "description": "Do A"
+              },
+              {
+                "optionId": "opt-b",
+                "replyValue": "b",
+                "label": "Option B",
+                "description": "Do B"
+              },
+              {
+                "optionId": "opt-c",
+                "replyValue": "c",
+                "label": "Option C",
+                "description": "Take approach C"
+              }
+            ],
+            "other": {
+              "optionId": "other",
+              "replyValue": "other:"
+            }
+          }
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-1",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-1",
+          "runId": "continuation-run-1",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      },
+      "elicitation": {
+        "decisionId": "decision-1",
+        "sourceEventId": "event-1",
+        "recommendedOptionId": "opt-a",
+        "header": "Which approach?",
+        "question": "Pick a path forward.",
+        "options": [
+          {
+            "optionId": "opt-a",
+            "replyValue": "a",
+            "label": "Option A",
+            "description": "Do A"
+          },
+          {
+            "optionId": "opt-b",
+            "replyValue": "b",
+            "label": "Option B",
+            "description": "Do B"
+          },
+          {
+            "optionId": "opt-c",
+            "replyValue": "c",
+            "label": "Option C",
+            "description": "Take approach C"
+          }
+        ],
+        "other": {
+          "optionId": "other",
+          "replyValue": "other:"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-run-waiting-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-waiting-1",
+      "occurredAt": "2026-08-25T00:03:07Z",
+      "producer": "worker",
+      "consumer": "router",
+      "envelopeType": "run.waiting_for_input",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "attempt": {
+        "contractVersion": "1.0.0",
+        "attemptId": "continuation-attempt-1",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1"
+      },
+      "run": {
+        "contractVersion": "1.0.0",
+        "runId": "continuation-run-1",
+        "taskId": "continuation-task-1",
+        "attemptId": "continuation-attempt-1",
+        "sessionBindingId": "continuation-binding-1",
+        "correlationId": "gc1",
+        "state": "waiting_for_input",
+        "elicitation": {
+          "decisionId": "decision-1",
+          "sourceEventId": "event-1",
+          "recommendedOptionId": "opt-a",
+          "header": "Which approach?",
+          "question": "Pick a path forward.",
+          "options": [
+            {
+              "optionId": "opt-a",
+              "replyValue": "a",
+              "label": "Option A",
+              "description": "Do A"
+            },
+            {
+              "optionId": "opt-b",
+              "replyValue": "b",
+              "label": "Option B",
+              "description": "Do B"
+            },
+            {
+              "optionId": "opt-c",
+              "replyValue": "c",
+              "label": "Option C",
+              "description": "Take approach C"
+            }
+          ],
+          "other": {
+            "optionId": "other",
+            "replyValue": "other:"
+          }
+        }
+      },
+      "elicitation": {
+        "decisionId": "decision-1",
+        "sourceEventId": "event-1",
+        "recommendedOptionId": "opt-a",
+        "header": "Which approach?",
+        "question": "Pick a path forward.",
+        "options": [
+          {
+            "optionId": "opt-a",
+            "replyValue": "a",
+            "label": "Option A",
+            "description": "Do A"
+          },
+          {
+            "optionId": "opt-b",
+            "replyValue": "b",
+            "label": "Option B",
+            "description": "Do B"
+          },
+          {
+            "optionId": "opt-c",
+            "replyValue": "c",
+            "label": "Option C",
+            "description": "Take approach C"
+          }
+        ],
+        "other": {
+          "optionId": "other",
+          "replyValue": "other:"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-task-waiting-1",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-run-waiting-1",
+      "occurredAt": "2026-08-25T00:03:08Z",
+      "producer": "router",
+      "consumer": "relay",
+      "envelopeType": "task.waiting_for_input",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "run": {
+        "runId": "continuation-run-1",
+        "state": "waiting_for_input",
+        "elicitation": {
+          "decisionId": "decision-1",
+          "sourceEventId": "event-1",
+          "recommendedOptionId": "opt-a",
+          "header": "Which approach?",
+          "question": "Pick a path forward.",
+          "options": [
+            {
+              "optionId": "opt-a",
+              "replyValue": "a",
+              "label": "Option A",
+              "description": "Do A"
+            },
+            {
+              "optionId": "opt-b",
+              "replyValue": "b",
+              "label": "Option B",
+              "description": "Do B"
+            },
+            {
+              "optionId": "opt-c",
+              "replyValue": "c",
+              "label": "Option C",
+              "description": "Take approach C"
+            }
+          ],
+          "other": {
+            "optionId": "other",
+            "replyValue": "other:"
+          }
+        }
+      },
+      "elicitation": {
+        "decisionId": "decision-1",
+        "sourceEventId": "event-1",
+        "recommendedOptionId": "opt-a",
+        "header": "Which approach?",
+        "question": "Pick a path forward.",
+        "options": [
+          {
+            "optionId": "opt-a",
+            "replyValue": "a",
+            "label": "Option A",
+            "description": "Do A"
+          },
+          {
+            "optionId": "opt-b",
+            "replyValue": "b",
+            "label": "Option B",
+            "description": "Do B"
+          },
+          {
+            "optionId": "opt-c",
+            "replyValue": "c",
+            "label": "Option C",
+            "description": "Take approach C"
+          }
+        ],
+        "other": {
+          "optionId": "other",
+          "replyValue": "other:"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-submit-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "occurredAt": "2026-08-25T00:04:00Z",
+      "submitIdempotencyKey": "g-submit-2-key",
+      "producer": "relay",
+      "consumer": "router",
+      "envelopeType": "task.submit",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "priorRunId": "continuation-run-1"
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-run-start-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-submit-2",
+      "occurredAt": "2026-08-25T00:04:01Z",
+      "producer": "router",
+      "consumer": "worker",
+      "envelopeType": "run.start",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-2",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "sessionBindingId": "continuation-binding-2",
+          "correlationId": "gc1",
+          "state": "pending",
+          "priorRunId": "continuation-run-1"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "runId": "continuation-run-2",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-executor-start-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-run-start-2",
+      "occurredAt": "2026-08-25T00:04:02Z",
+      "producer": "worker",
+      "consumer": "codex-adapter",
+      "envelopeType": "executor.start",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-2",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "sessionBindingId": "continuation-binding-2",
+          "correlationId": "gc1",
+          "state": "pending",
+          "priorRunId": "continuation-run-1"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "runId": "continuation-run-2",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      },
+      "capability": "codex.execute"
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-executor-accepted-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-start-2",
+      "occurredAt": "2026-08-25T00:04:03Z",
+      "producer": "codex-adapter",
+      "consumer": "worker",
+      "envelopeType": "executor.accepted",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-2",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "sessionBindingId": "continuation-binding-2",
+          "correlationId": "gc1",
+          "state": "pending",
+          "priorRunId": "continuation-run-1"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "runId": "continuation-run-2",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-run-accepted-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-accepted-2",
+      "occurredAt": "2026-08-25T00:04:04Z",
+      "producer": "worker",
+      "consumer": "router",
+      "envelopeType": "run.accepted",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "attempt": {
+        "contractVersion": "1.0.0",
+        "attemptId": "continuation-attempt-2",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1"
+      },
+      "run": {
+        "contractVersion": "1.0.0",
+        "runId": "continuation-run-2",
+        "taskId": "continuation-task-1",
+        "attemptId": "continuation-attempt-2",
+        "sessionBindingId": "continuation-binding-2",
+        "correlationId": "gc1",
+        "state": "pending",
+        "priorRunId": "continuation-run-1"
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-task-accepted-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-run-accepted-2",
+      "occurredAt": "2026-08-25T00:04:05Z",
+      "producer": "router",
+      "consumer": "relay",
+      "envelopeType": "task.accepted",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "run": {
+        "runId": "continuation-run-2",
+        "state": "pending"
+      }
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-executor-succeeded-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-accepted-2",
+      "occurredAt": "2026-08-25T00:04:06Z",
+      "producer": "codex-adapter",
+      "consumer": "worker",
+      "envelopeType": "executor.succeeded",
+      "identity": {
+        "contractVersion": "1.0.0",
+        "task": {
+          "contractVersion": "1.0.0",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1",
+          "sourceRef": {
+            "system": "linear",
+            "organizationId": "org-1",
+            "issueId": "issue-1",
+            "agentSessionId": "session-1"
+          }
+        },
+        "attempt": {
+          "contractVersion": "1.0.0",
+          "attemptId": "continuation-attempt-2",
+          "taskId": "continuation-task-1",
+          "correlationId": "gc1"
+        },
+        "run": {
+          "contractVersion": "1.0.0",
+          "runId": "continuation-run-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "sessionBindingId": "continuation-binding-2",
+          "correlationId": "gc1",
+          "state": "succeeded",
+          "priorRunId": "continuation-run-1",
+          "resultRef": "result-continuation-run-2"
+        },
+        "sessionBinding": {
+          "contractVersion": "1.0.0",
+          "sessionBindingId": "continuation-binding-2",
+          "taskId": "continuation-task-1",
+          "attemptId": "continuation-attempt-2",
+          "runId": "continuation-run-2",
+          "correlationId": "gc1",
+          "workerId": "worker-1",
+          "executorId": "codex-1"
+        }
+      },
+      "resultRef": "result-continuation-run-2"
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-run-succeeded-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-executor-succeeded-2",
+      "occurredAt": "2026-08-25T00:04:07Z",
+      "producer": "worker",
+      "consumer": "router",
+      "envelopeType": "run.succeeded",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "attempt": {
+        "contractVersion": "1.0.0",
+        "attemptId": "continuation-attempt-2",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1"
+      },
+      "run": {
+        "contractVersion": "1.0.0",
+        "runId": "continuation-run-2",
+        "taskId": "continuation-task-1",
+        "attemptId": "continuation-attempt-2",
+        "sessionBindingId": "continuation-binding-2",
+        "correlationId": "gc1",
+        "state": "succeeded",
+        "priorRunId": "continuation-run-1",
+        "resultRef": "result-continuation-run-2"
+      },
+      "resultRef": "result-continuation-run-2"
+    },
+    {
+      "contractVersion": "1.0.0",
+      "messageId": "g-task-succeeded-2",
+      "correlationId": "gc1",
+      "operationId": "continuation-operation-1",
+      "causationMessageId": "g-run-succeeded-2",
+      "occurredAt": "2026-08-25T00:04:08Z",
+      "producer": "router",
+      "consumer": "relay",
+      "envelopeType": "task.succeeded",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "continuation-task-1",
+        "correlationId": "gc1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "run": {
+        "runId": "continuation-run-2",
+        "state": "succeeded",
+        "resultRef": "result-continuation-run-2"
+      },
+      "resultRef": "result-continuation-run-2"
+    }
+  ]
+}

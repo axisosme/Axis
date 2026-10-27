@@ -1,0 +1,77 @@
+{
+  "contractVersion": "1.0.0",
+  "deliveryType": "executor_agent_response",
+  "envelope": {
+    "contractVersion": "1.0.0",
+    "messageId": "m-executor-succeeded",
+    "correlationId": "c1",
+    "operationId": "operation-1",
+    "causationMessageId": "m-executor-progress",
+    "occurredAt": "2026-08-25T00:00:06Z",
+    "producer": "codex-adapter",
+    "consumer": "worker",
+    "envelopeType": "executor.succeeded",
+    "identity": {
+      "contractVersion": "1.0.0",
+      "task": {
+        "contractVersion": "1.0.0",
+        "taskId": "task-1",
+        "correlationId": "c1",
+        "sourceRef": {
+          "system": "linear",
+          "organizationId": "org-1",
+          "issueId": "issue-1",
+          "agentSessionId": "session-1"
+        }
+      },
+      "attempt": {
+        "contractVersion": "1.0.0",
+        "attemptId": "attempt-1",
+        "taskId": "task-1",
+        "correlationId": "c1"
+      },
+      "run": {
+        "contractVersion": "1.0.0",
+        "runId": "run-1",
+        "taskId": "task-1",
+        "attemptId": "attempt-1",
+        "sessionBindingId": "binding-1",
+        "correlationId": "c1",
+        "state": "succeeded",
+        "resultRef": "result-run-1"
+      },
+      "sessionBinding": {
+        "contractVersion": "1.0.0",
+        "sessionBindingId": "binding-1",
+        "taskId": "task-1",
+        "attemptId": "attempt-1",
+        "runId": "run-1",
+        "correlationId": "c1",
+        "workerId": "worker-1",
+        "executorId": "codex-1"
+      }
+    },
+    "resultRef": "result-run-1"
+  },
+  "agentActivity": {
+    "contractVersion": "1.0.0",
+    "activityId": "activity-1",
+    "taskId": "task-1",
+    "attemptId": "attempt-1",
+    "runId": "run-1",
+    "conversation": {
+      "system": "linear",
+      "agentSessionId": "session-1"
+    },
+    "sourceEventId": "event-1",
+    "operationId": "operation-1",
+    "truncated": false,
+    "truncations": [],
+    "content": {
+      "type": "response",
+      "body": "The requested work completed safely."
+    },
+    "projectionStatus": "projected",
+    "resultRef": "result-run-1"
+  }
+}

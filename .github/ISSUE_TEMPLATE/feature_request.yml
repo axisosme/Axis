@@ -1,0 +1,25 @@
+name: Feature request
+description: Propose a focused improvement to Axis.
+body:
+  - type: markdown
+    attributes:
+      value: Keep examples free of credentials, personal information, prompts, and provider output.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe your use case and the limitation you encounter.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the expected outcome and how you would use it.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any existing workarounds or other approaches.

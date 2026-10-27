@@ -1,0 +1,7 @@
+{
+  "type": "AgentSessionEvent",
+  "action": "resumed",
+  "webhookId": "10000000-0000-4000-8000-000000000006",
+  "webhookTimestamp": 1787241600000,
+  "organizationId": "organization-fixture"
+}

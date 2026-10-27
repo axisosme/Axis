@@ -1,0 +1,18 @@
+schemaVersion = 1
+dataDir = "/var/lib/axis/data"
+
+[serve]
+kind = "codex"
+organizationId = "example-organization"
+workspaceRoot = "/var/lib/axis/workspaces"
+codexHome = "/var/lib/axis/codex"
+
+[relay]
+host = "0.0.0.0"
+port = 8787
+url = "https://axis.example.com/"
+
+[linear]
+clientId = "example-client"
+redirectUri = "https://axis.example.com/oauth/linear/callback"
+teamIds = ["example-team"]

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/runtime-boundary-message.schema.json",
+  "title": "Axis Runtime Boundary Message 1.0.0",
+  "oneOf": [
+    { "$ref": "task-submit-envelope.schema.json" }, { "$ref": "run-start-envelope.schema.json" }, { "$ref": "executor-start-envelope.schema.json" },
+    { "$ref": "executor-accepted-envelope.schema.json" }, { "$ref": "run-accepted-envelope.schema.json" }, { "$ref": "task-accepted-envelope.schema.json" },
+    { "$ref": "executor-progressed-envelope.schema.json" }, { "$ref": "run-progressed-envelope.schema.json" }, { "$ref": "task-progressed-envelope.schema.json" },
+    { "$ref": "executor-succeeded-envelope.schema.json" }, { "$ref": "run-succeeded-envelope.schema.json" }, { "$ref": "task-succeeded-envelope.schema.json" },
+    { "$ref": "executor-failed-envelope.schema.json" }, { "$ref": "run-failed-envelope.schema.json" }, { "$ref": "task-failed-envelope.schema.json" },
+    { "$ref": "executor-waiting-for-input-envelope.schema.json" }, { "$ref": "run-waiting-for-input-envelope.schema.json" }, { "$ref": "task-waiting-for-input-envelope.schema.json" }
+  ]
+}

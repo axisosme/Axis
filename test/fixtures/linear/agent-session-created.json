@@ -1,0 +1,25 @@
+{
+  "type": "AgentSessionEvent",
+  "action": "created",
+  "webhookId": "10000000-0000-4000-8000-000000000001",
+  "webhookTimestamp": 1787241600000,
+  "organizationId": "organization-fixture",
+  "appUserId": "app-user-fixture",
+  "agentSession": {
+    "id": "agent-session-fixture",
+    "status": "pending",
+    "creator": { "id": "human-user-fixture" },
+    "issue": { "id": "issue-fixture", "team": { "id": "team-fixture" } }
+  },
+  "agentActivity": null,
+  "promptContext": "<issue identifier=\"DEMO-9\">Build the relay</issue>",
+  "guidance": [
+    {
+      "body": "Use the captured Team execution profile.",
+      "origin": {
+        "type": "Team",
+        "team": { "id": "team-fixture", "key": "AX", "name": "Axis", "displayName": "Axis", "parentId": null }
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "contractVersion": "1.0.0",
+  "deliveryType": "run_agent_response",
+  "envelope": {
+    "contractVersion": "1.0.0",
+    "messageId": "m-run-succeeded",
+    "correlationId": "c1",
+    "operationId": "operation-1",
+    "causationMessageId": "m-executor-succeeded",
+    "occurredAt": "2026-08-25T00:00:07Z",
+    "producer": "worker",
+    "consumer": "router",
+    "envelopeType": "run.succeeded",
+    "task": {
+      "contractVersion": "1.0.0",
+      "taskId": "task-1",
+      "correlationId": "c1",
+      "sourceRef": {
+        "system": "linear",
+        "organizationId": "org-2",
+        "issueId": "issue-2",
+        "agentSessionId": "session-2"
+      }
+    },
+    "attempt": {
+      "contractVersion": "1.0.0",
+      "attemptId": "attempt-1",
+      "taskId": "task-1",
+      "correlationId": "c1"
+    },
+    "run": {
+      "contractVersion": "1.0.0",
+      "runId": "run-1",
+      "taskId": "task-1",
+      "attemptId": "attempt-1",
+      "sessionBindingId": "binding-1",
+      "correlationId": "c1",
+      "state": "succeeded",
+      "resultRef": "result-run-1"
+    },
+    "resultRef": "result-run-1"
+  },
+  "agentActivity": {
+    "contractVersion": "1.0.0",
+    "activityId": "activity-1",
+    "taskId": "task-1",
+    "attemptId": "attempt-1",
+    "runId": "run-1",
+    "conversation": {
+      "system": "linear",
+      "agentSessionId": "session-2"
+    },
+    "sourceEventId": "event-1",
+    "operationId": "operation-1",
+    "truncated": false,
+    "truncations": [],
+    "content": {
+      "type": "response",
+      "body": "The requested work completed safely."
+    },
+    "projectionStatus": "projected",
+    "resultRef": "result-run-1"
+  }
+}

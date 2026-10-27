@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/runtime-identity-graph.schema.json",
+  "title": "Axis Runtime Identity Graph 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "task": { "$ref": "task.schema.json" },
+    "attempt": { "$ref": "attempt.schema.json" },
+    "run": { "$ref": "run.schema.json" },
+    "sessionBinding": { "$ref": "session-binding.schema.json" }
+  },
+  "required": ["contractVersion", "task", "attempt", "run", "sessionBinding"],
+  "additionalProperties": false
+}

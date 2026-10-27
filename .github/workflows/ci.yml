@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request supersedes the run already in flight;
+# pushes to main are never cancelled, so every commit that lands on main
+# keeps its own completed run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  suites:
+    # Validate every pull request, including forks, and every push to main.
+    name: Node 24 / ${{ matrix.suite }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Run each validation group in an independent job.
+        suite: ["check:static", "test:relay", "test:node", "check:distribution"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run ${{ matrix.suite }}
+        env:
+          AXIS_CI_SUITE: ${{ matrix.suite }}
+        run: |
+          SECONDS=0
+          trap 'result=$?; printf "| Suite | Seconds | Exit code |\n| --- | ---: | ---: |\n| %s | %s | %s |\n" "$AXIS_CI_SUITE" "$SECONDS" "$result" >> "$GITHUB_STEP_SUMMARY"' EXIT
+          npm run "$AXIS_CI_SUITE"
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Scan the public source tree
+        run: >-
+          docker run --rm --volume "$PWD:/repo:ro" --workdir /repo
+          ghcr.io/gitleaks/gitleaks:v8.30.1 dir . --no-banner --redact
+
+  container:
+    name: Container build and smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+      - name: Build local image
+        run: docker build --tag axis:ci .
+
+      - name: Check packaged CLI and runtime isolation
+        run: |
+          docker run --rm axis:ci serve --help
+          docker run --rm --entrypoint codex axis:ci --version
+          docker run --rm --entrypoint node axis:ci --input-type=module -e '
+            import assert from "node:assert/strict";
+            import { existsSync } from "node:fs";
+            assert.notEqual(process.getuid(), 0);
+            for (const path of ["test", "src", "node_modules/typescript", "node_modules/tsx", "packages/contracts/test", "packages/contracts/dist/test"]) {
+              assert.equal(existsSync(path), false, path);
+            }
+            await import("./dist/index.js");
+          '
+
+  verify:
+    name: Node 24 verify
+    # Report failures and cancellations through the aggregate gate.
+    if: ${{ always() }}
+    needs: [suites, secrets, container]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require every validation suite to pass
+        env:
+          SUITES_RESULT: ${{ needs.suites.result }}
+          SECRETS_RESULT: ${{ needs.secrets.result }}
+          CONTAINER_RESULT: ${{ needs.container.result }}
+        run: test "$SUITES_RESULT" = success && test "$SECRETS_RESULT" = success && test "$CONTAINER_RESULT" = success

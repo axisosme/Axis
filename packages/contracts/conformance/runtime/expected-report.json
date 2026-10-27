@@ -1,0 +1,188 @@
+{
+  "reportVersion": "1.0.0",
+  "contractVersion": "1.0.0",
+  "suite": "runtime-v1-golden",
+  "status": "passed",
+  "schemaCoverage": {
+    "expected": 26,
+    "validated": 26,
+    "status": "passed"
+  },
+  "traces": [
+    {
+      "id": "success",
+      "status": "passed",
+      "messageCount": 12,
+      "outcome": "succeeded",
+      "terminal": {
+        "messageId": "m-task-succeeded",
+        "contractVersion": "1.0.0",
+        "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+        "safeErrorCode": null
+      }
+    },
+    {
+      "id": "failure",
+      "status": "passed",
+      "messageCount": 9,
+      "outcome": "failed",
+      "terminal": {
+        "messageId": "f-task-failed",
+        "contractVersion": "1.0.0",
+        "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+        "safeErrorCode": "executor_failed"
+      }
+    },
+    {
+      "id": "duplicate-submit",
+      "status": "passed",
+      "messageCount": 4,
+      "outcome": "duplicate",
+      "terminal": null
+    },
+    {
+      "id": "continuation",
+      "status": "passed",
+      "messageCount": 18,
+      "outcome": "succeeded",
+      "terminal": {
+        "messageId": "g-task-succeeded-2",
+        "contractVersion": "1.0.0",
+        "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+        "safeErrorCode": null
+      }
+    },
+    {
+      "id": "cancellation",
+      "status": "passed",
+      "messageCount": 9,
+      "outcome": "failed",
+      "terminal": {
+        "messageId": "x-task-failed-1",
+        "contractVersion": "1.0.0",
+        "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+        "safeErrorCode": "execution_cancelled"
+      }
+    },
+    {
+      "id": "continue-from-cancelled",
+      "status": "passed",
+      "messageCount": 18,
+      "outcome": "succeeded",
+      "terminal": {
+        "messageId": "y-task-failed-1",
+        "contractVersion": "1.0.0",
+        "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+        "safeErrorCode": "execution_cancelled"
+      }
+    }
+  ],
+  "mutations": [
+    {
+      "id": "broken-identity",
+      "rule": "RUNTIME-IDENTITY-LINEAGE",
+      "status": "rejected"
+    },
+    {
+      "id": "broken-source-identity",
+      "rule": "RUNTIME-IDENTITY-LINEAGE",
+      "status": "rejected"
+    },
+    {
+      "id": "illegal-state-order",
+      "rule": "RUNTIME-LEGAL-STATE-ORDER",
+      "status": "rejected"
+    },
+    {
+      "id": "wrong-terminal-count",
+      "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+      "status": "rejected"
+    },
+    {
+      "id": "missing-waiting-terminal",
+      "rule": "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+      "status": "rejected"
+    },
+    {
+      "id": "broken-correlation",
+      "rule": "RUNTIME-CORRELATION",
+      "status": "rejected"
+    },
+    {
+      "id": "duplicate-start-conflict",
+      "rule": "RUNTIME-START-IDEMPOTENCY",
+      "status": "rejected"
+    },
+    {
+      "id": "continuation-fork",
+      "rule": "RUNTIME-CONTINUATION-CHAIN",
+      "status": "rejected"
+    },
+    {
+      "id": "self-link",
+      "rule": "RUNTIME-CONTINUATION-CHAIN",
+      "status": "rejected"
+    },
+    {
+      "id": "submit-run-mismatch",
+      "rule": "RUNTIME-CONTINUATION-CHAIN",
+      "status": "rejected"
+    },
+    {
+      "id": "cross-trace-fork",
+      "rule": "RUNTIME-CONTINUATION-CHAIN",
+      "status": "rejected"
+    }
+  ],
+  "admissionCases": [
+    {
+      "id": "cross-task-predecessor",
+      "expectedDecision": "continuation_conflict",
+      "actualDecision": "continuation_conflict",
+      "status": "passed"
+    },
+    {
+      "id": "cross-tenant-predecessor",
+      "expectedDecision": "continuation_conflict",
+      "actualDecision": "continuation_conflict",
+      "status": "passed"
+    },
+    {
+      "id": "non-terminal-predecessor",
+      "expectedDecision": "continuation_conflict",
+      "actualDecision": "continuation_conflict",
+      "status": "passed"
+    },
+    {
+      "id": "first-run-bypass",
+      "expectedDecision": "continuation_conflict",
+      "actualDecision": "continuation_conflict",
+      "status": "passed"
+    },
+    {
+      "id": "same-key-retry-changed-priorrunid",
+      "expectedDecision": "conflict",
+      "actualDecision": "conflict",
+      "status": "passed"
+    },
+    {
+      "id": "legitimate-continuation-retry",
+      "expectedDecision": "duplicate",
+      "actualDecision": "duplicate",
+      "status": "passed"
+    }
+  ],
+  "summary": {
+    "tracesPassed": 6,
+    "mutationsRejected": 11,
+    "admissionCasesPassed": 6,
+    "rules": [
+      "RUNTIME-IDENTITY-LINEAGE",
+      "RUNTIME-CORRELATION",
+      "RUNTIME-LEGAL-STATE-ORDER",
+      "RUNTIME-EXACTLY-ONE-TERMINAL-RESULT",
+      "RUNTIME-START-IDEMPOTENCY",
+      "RUNTIME-CONTINUATION-CHAIN"
+    ]
+  }
+}

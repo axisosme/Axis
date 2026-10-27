@@ -1,0 +1,11 @@
+{
+  "type": "PermissionChange",
+  "action": "teamAccessChanged",
+  "webhookId": "10000000-0000-4000-8000-000000000004",
+  "webhookTimestamp": 1787241600000,
+  "organizationId": "organization-fixture",
+  "appUserId": "app-user-fixture",
+  "addedTeamIds": ["team-new"],
+  "removedTeamIds": ["team-fixture"],
+  "canAccessAllPublicTeams": false
+}

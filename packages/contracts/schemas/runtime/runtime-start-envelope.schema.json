@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/runtime-start-envelope.schema.json",
+  "title": "Axis Runtime Start Envelope 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "messageId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "operationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "startIdempotencyKey": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "identity": { "$ref": "runtime-identity-graph.schema.json" }
+  },
+  "required": ["contractVersion", "messageId", "correlationId", "operationId", "startIdempotencyKey", "occurredAt", "identity"],
+  "additionalProperties": false
+}

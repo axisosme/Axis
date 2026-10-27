@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/executor-start-envelope.schema.json",
+  "title": "Axis Runtime Executor Start Envelope 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" }, "messageId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }, "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }, "operationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }, "causationMessageId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }, "occurredAt": { "type": "string", "format": "date-time" },
+    "producer": { "const": "worker" }, "consumer": { "const": "codex-adapter" }, "envelopeType": { "const": "executor.start" }, "identity": { "$ref": "runtime-identity-graph.schema.json" }, "capability": { "const": "codex.execute" }, "methodRef": { "$ref": "common.schema.json#/$defs/methodRef" }
+  },
+  "required": ["contractVersion", "messageId", "correlationId", "operationId", "causationMessageId", "occurredAt", "producer", "consumer", "envelopeType", "identity", "capability"], "additionalProperties": false
+}

@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a reproducible problem in Axis.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report vulnerabilities privately using [SECURITY.md](https://github.com/axisosme/Axis/blob/main/SECURITY.md).
+        Remove credentials, personal information, prompts, and provider output from your report.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Which Axis version or commit are you running?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the OS, Node version, and affected component or executor. Omit local paths and private hostnames.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal example using synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include only redacted diagnostics needed to explain the problem.
+    validations:
+      required: true

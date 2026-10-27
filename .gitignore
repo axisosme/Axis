@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-test/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+coverage/
+
+# Local configuration and generated credential material.
+axis.toml
+axis.env
+data/
+**/secrets/

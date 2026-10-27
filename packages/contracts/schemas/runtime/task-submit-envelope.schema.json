@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/task-submit-envelope.schema.json",
+  "title": "Axis Runtime Task Submit Envelope 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "messageId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "operationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "submitIdempotencyKey": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "producer": { "const": "relay" },
+    "consumer": { "const": "router" },
+    "envelopeType": { "const": "task.submit" },
+    "task": { "$ref": "task.schema.json" },
+    "priorRunId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }
+  },
+  "required": ["contractVersion", "messageId", "correlationId", "operationId", "occurredAt", "submitIdempotencyKey", "producer", "consumer", "envelopeType", "task"],
+  "additionalProperties": false
+}

@@ -1,0 +1,25 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+const packageLock = JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url), "utf8"));
+const contractsPackage = JSON.parse(await readFile(new URL("../packages/contracts/package.json", import.meta.url), "utf8"));
+assert.equal(packageJson.version, "0.1.0");
+assert.equal(packageJson.dependencies["@linear/sdk"], "95.0.0");
+assert.equal(packageLock.packages[""].dependencies["@linear/sdk"], "95.0.0");
+assert.equal(packageLock.packages["node_modules/@linear/sdk"].version, "95.0.0");
+assert.equal(packageJson.dependencies["@axisosme/axis-contracts"], "0.1.0");
+assert.equal(packageJson.dependencies["@openai/codex"], "0.153.4");
+assert.equal(packageJson.dependencies.graphql, "16.14.2");
+assert.equal(packageLock.packages[""].dependencies.graphql, "16.14.2");
+assert.equal(packageLock.packages["node_modules/graphql"].version, "16.14.2");
+assert.equal(packageLock.packages[""].dependencies["@axisosme/axis-contracts"], "0.1.0");
+assert.equal(contractsPackage.name, "@axisosme/axis-contracts");
+assert.equal(contractsPackage.version, packageJson.dependencies[contractsPackage.name]);
+assert.deepEqual(packageJson.workspaces, ["packages/contracts"]);
+assert.deepEqual(packageLock.packages[""].workspaces, packageJson.workspaces);
+assert.equal(packageLock.packages["packages/contracts"].version, contractsPackage.version);
+assert.deepEqual(packageLock.packages["node_modules/@axisosme/axis-contracts"], { resolved: "packages/contracts", link: true });
+assert.deepEqual(packageLock.packages[""].bundleDependencies, packageJson.bundleDependencies);
+assert.equal(packageLock.packages[""].dependencies["@openai/codex"], "0.153.4");
+assert.equal(packageLock.packages["node_modules/@openai/codex"].version, "0.153.4");

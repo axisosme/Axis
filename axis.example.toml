@@ -1,0 +1,87 @@
+# Shared configuration for initialization, standalone services and library consumers.
+# Finalize before axis init; managed installations pin these exact bytes.
+schemaVersion = 1
+dataDir = "./data"
+
+# Defaults for selecting a local role from a topology shared across hosts.
+[host]
+node = "node-one"
+worker = "worker-one"
+
+[relay]
+host = "127.0.0.1"
+port = 8787
+url = "https://relay.example.invalid/"
+
+[router]
+host = "127.0.0.1"
+port = 8788
+url = "https://router.example.invalid/"
+defaultWorker = "worker-one"
+defaultExcludedTeamIds = ["team-private"]
+nativeSteer = false
+
+[linear]
+clientId = "example-client"
+redirectUri = "https://relay.example.invalid/oauth/linear/callback"
+teamIds = ["team-example"]
+allowAllPublicTeams = false
+ingressTickIntervalMs = 1000
+observeTickIntervalMs = 1000
+outboxTickIntervalMs = 1000
+integrityCheckIntervalMs = 60000
+apiEnabled = true
+apiTimeoutMs = 30000
+
+[[linear.executionGrants]]
+organizationId = "example-org"
+appUserId = "example-app"
+scope = "installation-workspace"
+
+[[nodes]]
+id = "node-one"
+ref = "node-one"
+version = "v1"
+host = "127.0.0.1"
+port = 9080
+url = "https://node.example.invalid/"
+eventHost = "127.0.0.1"
+eventPort = 9081
+defaultWorker = "worker-one"
+workerDispatchTimeoutMs = 30000
+routerEventTimeoutMs = 10000
+workerReadinessTimeoutMs = 5000
+eventRetryInitialDelayMs = 1000
+eventRetryMaxDelayMs = 30000
+eventMaxConcurrentRuns = 8
+
+[[nodes.workerScopeRules]]
+scope = { system = "linear", tenantId = "example-org", scopeId = "team-example" }
+workerKey = "worker-one"
+
+[[nodes.workers]]
+id = "worker-one"
+key = "worker-one"
+kind = "codex"
+executorId = "executor-one"
+version = "v1"
+endpointRef = "worker-one"
+endpointVersion = "v1"
+runtimeProfile = { ref = "executor-one", version = "v1" }
+host = "127.0.0.1"
+port = 9082
+labels = ["codex"]
+hostRoot = "./hosts/worker-one"
+profileFallbackPolicy = "allow"
+linearExecution = true
+
+[nodes.workers.instructions]
+sessionResponse = "Report progress and verified results through the current session."
+
+[[nodes.workers.workspaces]]
+organizationId = "example-org"
+workspaceRoot = "./workspaces/example"
+
+[[nodes.workers.workspaces.workspaceCatalog]]
+workspacePolicyRef = { ref = "example-project", version = "v1" }
+workspaceRoot = "./workspaces/example/project"

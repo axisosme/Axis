@@ -1,0 +1,60 @@
+{
+  "name": "@axisosme/axis-contracts",
+  "version": "0.1.0",
+  "description": "Runtime, agent activity, and Linear execution contracts for Axis",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    "./runtime": {
+      "types": "./dist/src/runtime/index.d.ts",
+      "import": "./dist/src/runtime/index.js"
+    },
+    "./agent-activity": {
+      "types": "./dist/src/agent-activity/index.d.ts",
+      "import": "./dist/src/agent-activity/index.js"
+    },
+    "./linear-execution": {
+      "types": "./dist/src/linear-execution/index.d.ts",
+      "import": "./dist/src/linear-execution/index.js"
+    },
+    "./schemas/*": "./schemas/*",
+    "./fixtures/*": "./fixtures/*",
+    "./conformance/*": "./conformance/*"
+  },
+  "files": [
+    "dist/src",
+    "schemas",
+    "fixtures",
+    "conformance",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/axisosme/Axis.git"
+  },
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "check:generated": "node scripts/generate-runtime-types.mjs && node scripts/generate-agent-activity-types.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build --silent && node --test dist/test/*.test.js",
+    "verify:package": "npm run build --silent && node scripts/verify-package.mjs",
+    "ci": "npm run check:generated && npm run typecheck && npm test && npm run verify:package",
+    "generate:runtime": "node scripts/generate-runtime-types.mjs --write",
+    "generate:agent-activity": "node scripts/generate-agent-activity-types.mjs --write"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
+  },
+  "license": "MIT"
+}

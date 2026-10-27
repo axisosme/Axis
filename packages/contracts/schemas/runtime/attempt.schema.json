@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/attempt.schema.json",
+  "title": "Axis Runtime Attempt 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "$ref": "common.schema.json#/$defs/contractVersion" },
+    "attemptId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "taskId": { "$ref": "common.schema.json#/$defs/providerNeutralId" },
+    "correlationId": { "$ref": "common.schema.json#/$defs/providerNeutralId" }
+  },
+  "required": ["contractVersion", "attemptId", "taskId", "correlationId"],
+  "additionalProperties": false
+}

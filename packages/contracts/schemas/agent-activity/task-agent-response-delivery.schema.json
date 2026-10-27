@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/agent-activity/task-agent-response-delivery.schema.json",
+  "title": "Axis Task Agent Response Delivery 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "const": "1.0.0" },
+    "deliveryType": { "const": "task_agent_response" },
+    "envelope": { "$ref": "https://github.com/axisosme/Axis/schemas/runtime/task-succeeded-envelope.schema.json" },
+    "agentActivity": { "$ref": "agent-activity-response-receipt.schema.json#/$defs/responseReceipt" }
+  },
+  "required": ["contractVersion", "deliveryType", "envelope", "agentActivity"],
+  "additionalProperties": false
+}

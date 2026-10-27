@@ -1,0 +1,53 @@
+{
+  "contractVersion": "1.0.0",
+  "deliveryType": "task_agent_response",
+  "envelope": {
+    "contractVersion": "1.0.0",
+    "messageId": "m-task-succeeded",
+    "correlationId": "c1",
+    "operationId": "operation-1",
+    "causationMessageId": "m-run-succeeded",
+    "occurredAt": "2026-08-25T00:00:08Z",
+    "producer": "router",
+    "consumer": "relay",
+    "envelopeType": "task.succeeded",
+    "task": {
+      "contractVersion": "1.0.0",
+      "taskId": "task-1",
+      "correlationId": "c1",
+      "sourceRef": {
+        "system": "linear",
+        "organizationId": "org-1",
+        "issueId": "issue-1",
+        "agentSessionId": "session-1"
+      }
+    },
+    "run": {
+      "runId": "run-1",
+      "state": "succeeded",
+      "resultRef": "result-run-1"
+    },
+    "resultRef": "result-run-1"
+  },
+  "agentActivity": {
+    "contractVersion": "1.0.0",
+    "activityId": "activity-1",
+    "taskId": "task-1",
+    "attemptId": "attempt-1",
+    "runId": "run-1",
+    "conversation": {
+      "system": "linear",
+      "agentSessionId": "session-1"
+    },
+    "sourceEventId": "event-1",
+    "operationId": "operation-1",
+    "truncated": false,
+    "truncations": [],
+    "content": {
+      "type": "response",
+      "body": "The agent completed the turn, but no safe response could be projected."
+    },
+    "projectionStatus": "fallback",
+    "resultRef": "result-run-1"
+  }
+}

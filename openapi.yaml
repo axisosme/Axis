@@ -1,0 +1,1796 @@
+openapi: 3.1.0
+info:
+  title: Axis Linear Relay API
+  version: 0.1.0
+  description: >-
+    Durable authenticated Linear Relay. The only execution topology is Relay/Router -> Node (Node contract 1.0.0) ->
+    Worker, each Worker a deployment-selected closed Codex or Claude Code executor; there is no direct
+    Router-to-Worker route. Worker command 1.0.0 and Router-to-Relay event 1.0.0 use exact current versions with no
+    alternate wire reader; the Worker waiting-for-input extension keeps its own 1.0.0 version. Five listeners are
+    documented, each path naming its own server: the Relay listener (Linear, OAuth and health routes), the Router
+    listener (only POST /v1/router/node-run-events, authenticated by per-Node event binding tokens; the Router has no
+    bearer of its own), the Node command listener (/v1/node/commands, /v1/node/command-receipts, /v1/node/readiness),
+    the Node numeric-loopback event listener (/v1/node/maintenance and the Worker-to-Node /v1/router/run-events), and
+    the private Worker listener (/v1/worker/*).
+servers:
+  - url: https://relay.example
+    description: Relay listener.
+paths:
+  /api/linear/execution-credentials:
+    post:
+      operationId: exchangeLinearExecutionCredential
+      description: >-
+        Opt-in protected receiver exchange. The dedicated receiver bearer
+        only identifies the Worker; Relay must already hold independent business
+        approval for the exact Task/Attempt/Run/workspace and prove its assigned
+        destination. Issue returns a short-lived Relay capability, never a Linear
+        OAuth token. Revoke closes the execution. No Runtime envelope extension,
+        persistent credential, redirect, query parameter or compressed body.
+        TLS between hosts; numeric-loopback HTTP only for one trusted host.
+        Maximum body size 8192 bytes. Disabled returns 404. No-store responses.
+      security:
+        - LinearExecutionReceiver: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: https://github.com/axisosme/Axis/schemas/linear-execution/linear-execution-credentials.schema.json#/$defs/request
+      responses:
+        '200':
+          description: Issued credential or execution revocation, bound to the request.
+          headers: { Cache-Control: { schema: { type: string, const: no-store } } }
+          content:
+            application/json:
+              schema:
+                $ref: https://github.com/axisosme/Axis/schemas/linear-execution/linear-execution-credentials.schema.json#/$defs/response
+        '400': { description: Malformed or unsupported credential exchange. }
+        '401': { description: Expired or revoked execution capability. }
+        '403': { description: Receiver, execution, workspace or installation authority refused. }
+        '404': { description: Execution credential exchange is disabled. }
+        '503': { description: Credential owner is unavailable or at capacity. }
+  /api/linear/graphql:
+    post:
+      operationId: forwardLinearGraphQl
+      description: >-
+        Opt-in proxy using an execution capability or a configured CLI credential.
+        Installation is selected only from trusted credential authority; the Axis OAuth token is
+        sent only to https://api.linear.app/graphql. Disabled returns 404; enabled
+        without either authentication mode returns 503. Preserves GraphQL data,
+        errors, partial success and pagination. HTTP 200 does not prove business
+        success. No mutation replay, deduplication or universal exactly-once
+        guarantee. Uncertain mutations return linear.proxy.outcome_unknown with
+        a request ID. No batching, subscriptions, GET, multipart, query parameters
+        or compressed requests. Request limit 1 MiB, response limit 8 MiB.
+      security:
+        - LinearExecutionCredential: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [query]
+              properties:
+                query: { type: string, minLength: 1 }
+                variables: { type: [object, 'null'], additionalProperties: true }
+                operationName: { type: [string, 'null'] }
+      responses:
+        '200': { $ref: '#/components/responses/LinearApiResult' }
+        '400': { $ref: '#/components/responses/LinearApiResult' }
+        '401': { $ref: '#/components/responses/LinearApiResult' }
+        '403': { $ref: '#/components/responses/LinearApiResult' }
+        '404':
+          description: The optional route is disabled.
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+        '405':
+          description: Only POST is supported; callers must still provide a valid Axis credential.
+          headers: { Allow: { schema: { type: string, const: POST } } }
+          content: { application/json: { schema: { type: object, required: [errors], additionalProperties: true } } }
+        '413': { $ref: '#/components/responses/LinearApiResult' }
+        '415': { $ref: '#/components/responses/LinearApiResult' }
+        '429': { $ref: '#/components/responses/LinearApiResult' }
+        '502': { $ref: '#/components/responses/LinearApiResult' }
+        '503': { $ref: '#/components/responses/LinearApiResult' }
+        '504': { $ref: '#/components/responses/LinearApiResult' }
+        default: { $ref: '#/components/responses/LinearApiResult' }
+  /v1/worker/commands:
+    post:
+      operationId: acceptWorkerCommand
+      servers:
+        - url: https://worker.example
+      description: >-
+        Private Worker command 1.0.0 ingress. Start and continue require
+        a frozen opaque workspacePolicyRef or explicit null; cancel remains path-free. The Worker resolves
+        only through its local trusted catalog, audits mapped/default/fallback/unavailable before executor
+        side effects, falls back only to the configured organization root, and returns a fixed 503 without
+        launching when no trusted directory is usable. Caller content cannot supply or override a path.
+      security:
+        - WorkerBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkerCommand' }
+      responses:
+        '202':
+          description: A command was durably accepted after its execution target matched this Worker and workspace resolution was durably audited.
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerCommandResponse' } } }
+        '200':
+          description: Exact durable command replay; no executor action is repeated.
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerCommandResponse' } } }
+        '400': { $ref: '#/components/responses/WorkerMalformed' }
+        '401': { $ref: '#/components/responses/WorkerUnauthorized' }
+        '403': { $ref: '#/components/responses/WorkerPolicyForbidden' }
+        '405':
+          description: The Worker route accepts POST only.
+          headers: { Allow: { schema: { type: string, const: POST } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+        '409': { $ref: '#/components/responses/WorkerConflict' }
+        '413': { $ref: '#/components/responses/WorkerBodyTooLarge' }
+        '415': { $ref: '#/components/responses/WorkerUnsupportedMedia' }
+        '502': { $ref: '#/components/responses/WorkerLaunchFailed' }
+        '503': { $ref: '#/components/responses/WorkerUnavailable' }
+  /v1/worker/readiness:
+    get:
+      operationId: readCodexWorkerReadiness
+      servers:
+        - url: https://worker.example
+      description: >-
+        Authenticated, query-free Codex Worker process-generation readiness. The response contains only
+        closed path-free app-server and configured profile-registry evidence; it does not probe model routing.
+        This route is absent on non-Codex Worker variants.
+      security:
+        - WorkerBearer: []
+      responses:
+        '200':
+          description: The pinned Codex app-server and every configured role are ready.
+          content: { application/json: { schema: { $ref: '#/components/schemas/CodexWorkerReadiness' } } }
+        '400':
+          description: Query parameters are not accepted.
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+        '401': { $ref: '#/components/responses/WorkerUnauthorized' }
+        '405':
+          description: The Codex Worker readiness route accepts GET only.
+          headers: { Allow: { schema: { type: string, const: GET } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+        '503':
+          description: The pinned app-server or at least one configured profile is unavailable or incompatible.
+          content: { application/json: { schema: { $ref: '#/components/schemas/CodexWorkerReadiness' } } }
+  /v1/worker/commands/{commandId}:
+    get:
+      operationId: readWorkerCommandRecord
+      servers:
+        - url: https://worker.example
+      description: >-
+        Read-only command record. It returns exactly the response this Worker recorded when it
+        accepted the command -- the same body its dispatch returned -- or not_recorded. It never begins,
+        reserves, or executes a command and exposes no other Worker state. A Node uses it to converge an
+        ambiguous receipt without re-dispatching. Recording is atomic with acceptance, so a Run that was
+        accepted always has a recorded response. As with readiness, a non-GET method is answered 405 before
+        authentication.
+      security:
+        - WorkerBearer: []
+      parameters:
+        - name: commandId
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        '200':
+          description: The recorded response, or not_recorded when this Worker holds no response for the command.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    additionalProperties: false
+                    required: [commandId, status, response]
+                    properties:
+                      commandId: { type: string }
+                      status: { const: recorded }
+                      response: { $ref: '#/components/schemas/WorkerCommandResponse' }
+                  - type: object
+                    additionalProperties: false
+                    required: [commandId, status]
+                    properties:
+                      commandId: { type: string }
+                      status: { const: not_recorded }
+        '400':
+          description: Query parameters or a malformed command identifier are not accepted.
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+        '401': { $ref: '#/components/responses/WorkerUnauthorized' }
+        '404':
+          description: >-
+            An unavailable record route may return axis.worker.malformed.
+            A Node treats that as an unknown answer, leaves the receipt ambiguous, and asks again after backoff.
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+        '405':
+          description: The command record route accepts GET only.
+          headers: { Allow: { schema: { type: string, const: GET } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+        '503':
+          description: >-
+            axis.worker.recovery_required when the Worker cannot read its command journal. A Node treats it as
+            an unknown answer and leaves the receipt ambiguous.
+          content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+  /v1/router/node-run-events:
+    post:
+      operationId: ingestRouterNodeRunEvent
+      servers:
+        - url: https://router.example
+          description: Router listener. This is its only route; every other path answers 404 axis.router.malformed.
+      description: >-
+        Router listener (ROUTER_NODE_EVENT_HTTP_PATH). A Node forwards one Worker run lifecycle event it journaled. The
+        bearer selects exactly one configured Node event binding; the Router has no bearer of its own. A non-POST method is answered 405 and an unknown path 404 before authentication; a query
+        string, media type and body are checked after it. The closed body's nodeRef must be the binding's Node and its
+        origin one of the binding's allowed Worker identities, otherwise 409. Maximum body 131,072 bytes. No-store
+        responses. Errors use RouterError with the closed RouterHttpErrorCode set.
+      security:
+        - NodeEventBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RouterNodeEventHttpRequest' }
+      responses:
+        '202':
+          description: The event was newly recorded (buffered or projected).
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterNodeEventHttpResponse' } } }
+        '200':
+          description: Exact replay of a previously recorded event.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterNodeEventHttpResponse' } } }
+        '400':
+          description: axis.router.malformed -- query string, invalid JSON, non-closed body, wrong contractVersion, invalid nodeRef or origin.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '401':
+          description: axis.router.unauthorized -- missing, duplicated or unknown Node event binding bearer.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '404':
+          description: axis.router.malformed -- the path is not mounted on this listener.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '405':
+          description: axis.router.malformed -- only POST is allowed.
+          headers: { Allow: { schema: { type: string, const: POST } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '409':
+          description: >-
+            axis.router.conflict when nodeRef is not the binding's Node, the origin is not an allowed identity for it,
+            the event is quarantined, or the Run is not found; axis.router.intent_conflict when it conflicts with an
+            existing receipt.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '413':
+          description: axis.router.body_too_large.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '415':
+          description: axis.router.unsupported_media -- not exactly one application/json (optionally charset=utf-8) content type, or any content encoding.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '502':
+          description: axis.router.protocol_violation -- the envelope is not a valid Worker run lifecycle event.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+        '503':
+          description: axis.router.recovery_required (also any unclassified failure) or axis.router.worker_rejected.
+          content: { application/json: { schema: { $ref: '#/components/schemas/RouterError' } } }
+  /v1/node/commands:
+    post:
+      operationId: executeNodeCommand
+      servers:
+        - url: https://node.example
+          description: Node command listener (TOML nodes.host/nodes.port).
+      description: >-
+        Node command listener. Router submits one Node contract 1.0.0 command; the Node reserves a Worker from its
+        inventory, completes the Worker command 1.0.0 (including executionTarget for start and continue) and
+        dispatches it. Continue, cancel and steer use the predecessor route's retained reservation. Only the command
+        contract is served; any other contract version is malformed. A non-POST method (405) and an unknown path (404
+        axis.node.target_unknown) are answered before authentication. Every refusal is a NodeCommandError body. Maximum
+        body 131,072 bytes; the nested command is bounded to 65,536 bytes.
+      security:
+        - NodeBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NodeCommandRequest' }
+      responses:
+        '202':
+          description: The durable receipt for the command after this execution (accepted, rejected, reserved, dispatching or ambiguous).
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeReceipt' } } }
+        '400': { $ref: '#/components/responses/NodeCommandError' }
+        '401': { $ref: '#/components/responses/NodeCommandError' }
+        '404': { $ref: '#/components/responses/NodeCommandError' }
+        '405':
+          description: axis.node.malformed at 405 -- only POST is allowed.
+          headers: { Allow: { schema: { type: string, const: POST } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeCommandError' } } }
+        '409': { $ref: '#/components/responses/NodeCommandError' }
+        '413': { $ref: '#/components/responses/NodeCommandError' }
+        '415': { $ref: '#/components/responses/NodeCommandError' }
+        '503': { $ref: '#/components/responses/NodeCommandError' }
+  /v1/node/command-receipts:
+    post:
+      operationId: readNodeCommandReceipt
+      servers:
+        - url: https://node.example
+          description: Node command listener (TOML nodes.host/nodes.port).
+      description: >-
+        Node command listener. Reads the durable receipt for one commandId without dispatching. Same method,
+        authentication, media, size and error rules as /v1/node/commands.
+      security:
+        - NodeBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NodeReceiptQuery' }
+      responses:
+        '200':
+          description: The durable receipt, or not_found.
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeReceipt' } } }
+        '400': { $ref: '#/components/responses/NodeCommandError' }
+        '401': { $ref: '#/components/responses/NodeCommandError' }
+        '404': { $ref: '#/components/responses/NodeCommandError' }
+        '405':
+          description: axis.node.malformed at 405 -- only POST is allowed.
+          headers: { Allow: { schema: { type: string, const: POST } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeCommandError' } } }
+        '409': { $ref: '#/components/responses/NodeCommandError' }
+        '413': { $ref: '#/components/responses/NodeCommandError' }
+        '415': { $ref: '#/components/responses/NodeCommandError' }
+        '503': { $ref: '#/components/responses/NodeCommandError' }
+  /v1/node/readiness:
+    get:
+      operationId: readNodeReadiness
+      servers:
+        - url: https://node.example
+          description: Node command listener (TOML nodes.host/nodes.port).
+      description: >-
+        Node command listener. Query-free, body-free aggregate readiness: service, storage and per-Worker transport
+        evidence. It is intentionally not an overall ready/not-ready verdict and always answers 200 when readiness can
+        be computed. A non-GET method is answered 405 before authentication.
+      security:
+        - NodeBearer: []
+      responses:
+        '200':
+          description: Aggregate Node readiness.
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeReadiness' } } }
+        '400': { $ref: '#/components/responses/NodeCommandError' }
+        '401': { $ref: '#/components/responses/NodeCommandError' }
+        '405':
+          description: axis.node.malformed at 405 -- only GET is allowed.
+          headers: { Allow: { schema: { type: string, const: GET } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeCommandError' } } }
+        '503': { $ref: '#/components/responses/NodeCommandError' }
+  /v1/node/maintenance:
+    get:
+      operationId: readNodeMaintenance
+      servers:
+        - url: http://127.0.0.1:{eventPort}
+          description: Node event listener (numeric loopback only; TOML nodes.eventHost/nodes.eventPort).
+          variables: { eventPort: { default: '0' } }
+      description: >-
+        Node event listener. Operator drain status. Query-free and body-free. A method other than GET or POST is
+        answered 405 before authentication. Errors use the Node 1.0.0 error body.
+      security:
+        - NodeBearer: []
+      responses:
+        '200':
+          description: Current maintenance status.
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeMaintenanceStatus' } } }
+        '400': { $ref: '#/components/responses/NodeEventListenerError' }
+        '401': { $ref: '#/components/responses/NodeEventListenerError' }
+        '405':
+          description: axis.node.malformed at 405 -- only GET and POST are allowed.
+          headers: { Allow: { schema: { type: string, const: 'GET, POST' } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeErrorV1' } } }
+        '503': { $ref: '#/components/responses/NodeEventListenerError' }
+    post:
+      operationId: setNodeMaintenanceMode
+      servers:
+        - url: http://127.0.0.1:{eventPort}
+          description: Node event listener (numeric loopback only; TOML nodes.eventHost/nodes.eventPort).
+          variables: { eventPort: { default: '0' } }
+      description: Node event listener. Sets drain or resume and returns the resulting status. Query-free.
+      security:
+        - NodeBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NodeMaintenanceRequest' }
+      responses:
+        '200':
+          description: Maintenance status after the mode change.
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeMaintenanceStatus' } } }
+        '400': { $ref: '#/components/responses/NodeEventListenerError' }
+        '401': { $ref: '#/components/responses/NodeEventListenerError' }
+        '405':
+          description: axis.node.malformed at 405 -- only GET and POST are allowed.
+          headers: { Allow: { schema: { type: string, const: 'GET, POST' } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeErrorV1' } } }
+        '413': { $ref: '#/components/responses/NodeEventListenerError' }
+        '415': { $ref: '#/components/responses/NodeEventListenerError' }
+        '503': { $ref: '#/components/responses/NodeEventListenerError' }
+  /v1/router/run-events:
+    post:
+      operationId: ingestNodeWorkerRunEvent
+      servers:
+        - url: http://127.0.0.1:{eventPort}
+          description: Node event listener (numeric loopback only; TOML nodes.eventHost/nodes.eventPort). Not the Router.
+          variables: { eventPort: { default: '0' } }
+      description: >-
+        Served only by the Node event listener. The Router has no route of this name and answers 404. A Worker posts its run lifecycle events here. Its event destination is derived from the parent TOML Node
+        declaration's eventHost/eventPort. The bearer comes from dataDir/secrets/worker-<id>-events.key,
+        shared by that Worker and Node, and authenticates its full execution identity. A non-POST method is
+        answered 405 before authentication. The Run must have an accepted route on this Node (else 404
+        axis.node.target_unknown) whose target identity equals the authenticated one (else 403
+        axis.node.target_forbidden). Maximum body 131,072 bytes; the nested envelope is bounded to 65,536 bytes.
+        Errors use the Node 1.0.0 error body.
+      security:
+        - WorkerEventBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NodeWorkerEventRequest' }
+      responses:
+        '202':
+          description: The event was newly journaled.
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeWorkerEventReceipt' } } }
+        '200':
+          description: Exact replay of a journaled event.
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeWorkerEventReceipt' } } }
+        '400': { $ref: '#/components/responses/NodeEventListenerError' }
+        '401': { $ref: '#/components/responses/NodeEventListenerError' }
+        '403': { $ref: '#/components/responses/NodeEventListenerError' }
+        '404': { $ref: '#/components/responses/NodeEventListenerError' }
+        '405':
+          description: axis.node.malformed at 405 -- only POST is allowed.
+          headers: { Allow: { schema: { type: string, const: POST } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/NodeErrorV1' } } }
+        '413': { $ref: '#/components/responses/NodeEventListenerError' }
+        '415': { $ref: '#/components/responses/NodeEventListenerError' }
+        '503': { $ref: '#/components/responses/NodeEventListenerError' }
+  /webhooks/linear:
+    post:
+      operationId: acceptLinearWebhook
+      security:
+        - LinearWebhook: []
+      parameters:
+        - $ref: '#/components/parameters/LinearDelivery'
+        - $ref: '#/components/parameters/LinearEvent'
+        - $ref: '#/components/parameters/LinearSignature'
+        - $ref: '#/components/parameters/LinearTimestamp'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, action, webhookId, webhookTimestamp]
+              additionalProperties: true
+      responses:
+        '200':
+          description: Delivery durably accepted or previously accepted as an exact duplicate.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /oauth/linear/install:
+    get:
+      operationId: beginLinearAppInstallation
+      security:
+        - OperatorBearer: []
+      parameters:
+        - name: return_to
+          in: query
+          schema: { type: string, pattern: '^/(?!/)' }
+      responses:
+        '302': { description: Redirect to Linear App User OAuth authorization. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /oauth/linear/callback:
+    get:
+      operationId: completeLinearAppInstallation
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string } }
+        - { name: state, in: query, required: true, schema: { type: string } }
+      responses:
+        '303': { description: Installation stored; redirect to captured local path. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Unauthorized' }
+  /health/live:
+    get:
+      operationId: relayLiveness
+      responses:
+        '200':
+          description: Process is listening.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+  /health/ready:
+    get:
+      operationId: relayReadiness
+      description: >-
+        Unauthenticated. Answers only whether this process can take traffic:
+        the credential store is readable and every channel store passes a
+        schema check whose cost is independent of how much data it holds. It
+        runs no PRAGMA integrity_check and no PRAGMA foreign_key_check, so its
+        latency does not rise as the databases grow. Two of the five stores
+        re-check their full invariants on every operation, so damage below the
+        schema layer is reported here as soon as a request touches them; for
+        the other three it is reported only by /health/diagnostics.
+        In axis serve mode, also requires active component listeners and an
+        authenticated, bounded Node storage and Worker readiness probe. Codex
+        must report ready; Claude Code uses its successful startup preflight
+        and active listener because continuous native readiness is unsupported.
+      responses:
+        '200':
+          description: Persistence and credential storage are ready.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /health/diagnostics:
+    get:
+      operationId: relayDiagnostics
+      description: >-
+        Operator-triggered, never polled. Runs the full per-store check --
+        PRAGMA integrity_check, PRAGMA foreign_key_check, the schema
+        fingerprint sweep and the cross-table consistency queries -- and
+        reports each store separately. These are whole-database reads whose
+        cost grows with the data, which is why the operator token is required
+        before any of them runs. A process can be ready and degraded at once.
+      security:
+        - OperatorBearer: []
+      responses:
+        '200':
+          description: Every store passed its full check.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Diagnostics' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503':
+          description: At least one store failed its full check, or the credential store is unreadable.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Diagnostics' }
+components:
+  securitySchemes:
+    LinearExecutionReceiver:
+      type: http
+      scheme: bearer
+      description: Dedicated per-Worker receiver authentication. Distinct from execution, OAuth, Node, Worker, Router and operator credentials.
+    LinearExecutionCredential:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Axis execution capability or configured installation-workspace CLI credential, either bare or prefixed with Bearer. No personal, OAuth, Node or operator credentials.
+    LinearWebhook:
+      type: apiKey
+      in: header
+      name: Linear-Signature
+      description: Hex HMAC-SHA256 over the exact raw request bytes; delivery/event/timestamp headers are also required.
+    OperatorBearer:
+      type: http
+      scheme: bearer
+    WorkerBearer:
+      type: http
+      scheme: bearer
+      description: One deployment-configured private Worker token. Duplicate, malformed, missing, and incorrect credentials return the same safe 401.
+    NodeEventBearer:
+      type: http
+      scheme: bearer
+      description: >-
+        Router listener only. One token per configured Node event binding, each bound to one authenticated Node
+        (nodeRef, nodeId) and its allowed Worker identities. The Router has no bearer of its own.
+    NodeBearer:
+      type: http
+      scheme: bearer
+      description: The generated dataDir/secrets/node-<id>-command.key. Distinct from every Worker command and event key.
+    WorkerEventBearer:
+      type: http
+      scheme: bearer
+      description: >-
+        Node event listener /v1/router/run-events only. The generated dataDir/secrets/worker-<id>-events.key,
+        shared by that Worker and its Node; it identifies that Worker's execution identity.
+  parameters:
+    LinearDelivery: { name: Linear-Delivery, in: header, required: true, schema: { type: string, format: uuid } }
+    LinearEvent: { name: Linear-Event, in: header, required: true, schema: { type: string } }
+    LinearSignature: { name: Linear-Signature, in: header, required: true, schema: { type: string, pattern: '^[0-9a-fA-F]{64}$' } }
+    LinearTimestamp: { name: Linear-Timestamp, in: header, required: true, schema: { type: string, pattern: '^[0-9]+$' } }
+  schemas:
+    CodexWorkerReadiness:
+      type: object
+      additionalProperties: false
+      required: [status, modelAvailability, profiles, degradedReasons]
+      properties:
+        status: { type: string, enum: [ready, degraded] }
+        modelAvailability: { type: string, const: not_checked }
+        profiles:
+          type: object
+          additionalProperties: false
+          required: [explorer, architect, reviewer, worker]
+          properties:
+            explorer: { $ref: '#/components/schemas/CodexWorkerProfileReadiness' }
+            architect: { $ref: '#/components/schemas/CodexWorkerProfileReadiness' }
+            reviewer: { $ref: '#/components/schemas/CodexWorkerProfileReadiness' }
+            worker: { $ref: '#/components/schemas/CodexWorkerProfileReadiness' }
+        degradedReasons:
+          type: array
+          items: { type: string, enum: [app_server_unavailable, app_server_identity_unavailable, app_server_config_unavailable, profile_registry_unavailable] }
+    CodexWorkerProfileReadiness:
+      type: object
+      additionalProperties: false
+      required: [availability, attempt]
+      properties:
+        availability: { type: string, enum: [available, unavailable] }
+        attempt: { type: string, const: not_attempted }
+    ProviderNeutralId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$'
+    ContractVersion:
+      enum: [1.0.0]
+    RuntimeState:
+      enum: [pending, running, succeeded, failed]
+    SourceRef:
+      type: object
+      required: [system, organizationId, issueId]
+      properties:
+        system: { const: linear }
+        organizationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        issueId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        agentSessionId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    RuntimeError:
+      type: object
+      required: [code, safeMessage]
+      properties:
+        code: { $ref: '#/components/schemas/ProviderNeutralId' }
+        safeMessage: { type: string, minLength: 1, maxLength: 512 }
+      additionalProperties: false
+    ResultRef:
+      type: string
+      minLength: 1
+      maxLength: 2048
+    NativeSessionRef:
+      type: object
+      required: [runtimeKind, sessionId]
+      properties:
+        runtimeKind: { $ref: '#/components/schemas/ProviderNeutralId' }
+        sessionId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    Task:
+      type: object
+      required: [contractVersion, taskId, correlationId, sourceRef]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        sourceRef: { $ref: '#/components/schemas/SourceRef' }
+      additionalProperties: false
+    Attempt:
+      type: object
+      required: [contractVersion, attemptId, taskId, correlationId]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    Run:
+      type: object
+      required: [contractVersion, runId, taskId, attemptId, sessionBindingId, correlationId, state]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        priorRunId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        state: { $ref: '#/components/schemas/RuntimeState' }
+        error: { $ref: '#/components/schemas/RuntimeError' }
+        resultRef: { $ref: '#/components/schemas/ResultRef' }
+      additionalProperties: false
+    SessionBinding:
+      type: object
+      required: [contractVersion, sessionBindingId, taskId, attemptId, runId, correlationId, workerId, executorId]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        workerId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        executorId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        nativeSessionRef: { $ref: '#/components/schemas/NativeSessionRef' }
+      additionalProperties: false
+    RuntimeIdentityGraph:
+      type: object
+      required: [contractVersion, task, attempt, run, sessionBinding]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run: { $ref: '#/components/schemas/Run' }
+        sessionBinding: { $ref: '#/components/schemas/SessionBinding' }
+      additionalProperties: false
+    RunStartEnvelope:
+      type: object
+      description: RunStartEnvelope from the Runtime surface.
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, identity]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: router }
+        consumer: { const: worker }
+        envelopeType: { const: run.start }
+        identity: { $ref: '#/components/schemas/RuntimeIdentityGraph' }
+      additionalProperties: false
+    RunAcceptedEnvelope:
+      type: object
+      description: RunAcceptedEnvelope from the Runtime surface.
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, attempt, run]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: worker }
+        consumer: { const: router }
+        envelopeType: { const: run.accepted }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run: { $ref: '#/components/schemas/Run' }
+      additionalProperties: false
+    SucceededRun:
+      type: object
+      required: [contractVersion, runId, taskId, attemptId, sessionBindingId, correlationId, state, resultRef]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        priorRunId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        state: { const: succeeded }
+        resultRef: { $ref: '#/components/schemas/ResultRef' }
+      additionalProperties: false
+    FailedRun:
+      type: object
+      required: [contractVersion, runId, taskId, attemptId, sessionBindingId, correlationId, state, error]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        priorRunId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        state: { const: failed }
+        error: { $ref: '#/components/schemas/RuntimeError' }
+      additionalProperties: false
+    RunSucceededEnvelope:
+      type: object
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, attempt, run, resultRef]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: worker }
+        consumer: { const: router }
+        envelopeType: { const: run.succeeded }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run: { $ref: '#/components/schemas/SucceededRun' }
+        resultRef: { $ref: '#/components/schemas/ResultRef' }
+      additionalProperties: false
+    AgentActivityTruncation:
+      type: object
+      required: [fieldPath, truncated, originalScalarCount, omittedScalarCount]
+      properties:
+        fieldPath: { const: /content/body }
+        truncated: { const: true }
+        originalScalarCount: { type: integer, minimum: 4097 }
+        omittedScalarCount: { type: integer, minimum: 1 }
+      additionalProperties: false
+    ResponseAgentActivityReceipt:
+      description: Linear response receipt from the owned Agent Activity contract.
+      $ref: https://github.com/axisosme/Axis/schemas/agent-activity/agent-activity-response-receipt.schema.json#/$defs/responseReceipt
+    RunAgentResponseDelivery:
+      description: Worker-to-Router terminal response wrapper from the owned Agent Activity contract, with a Runtime envelope.
+      $ref: https://github.com/axisosme/Axis/schemas/agent-activity/run-agent-response-delivery.schema.json
+    RunFailedEnvelope:
+      type: object
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, attempt, run, error]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: worker }
+        consumer: { const: router }
+        envelopeType: { const: run.failed }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run: { $ref: '#/components/schemas/FailedRun' }
+        error: { $ref: '#/components/schemas/RuntimeError' }
+      additionalProperties: false
+    Progress:
+      type: object
+      required: [completed]
+      properties:
+        completed: { type: integer, minimum: 0 }
+        total: { type: integer, minimum: 1 }
+        safeMessage: { type: string, minLength: 1, maxLength: 512 }
+      additionalProperties: false
+    RunProgressedEnvelope:
+      type: object
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, attempt, run, progress]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: worker }
+        consumer: { const: router }
+        envelopeType: { const: run.progressed }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run: { $ref: '#/components/schemas/Run' }
+        progress: { $ref: '#/components/schemas/Progress' }
+      additionalProperties: false
+    WorkspacePolicyRef:
+      type: object
+      required: [ref, version]
+      properties:
+        ref: { $ref: '#/components/schemas/ProviderNeutralId' }
+        version: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    WorkerExecutionIdentity:
+      type: object
+      required: [nodeId, workerId, executorKind, runtimeProfile]
+      properties:
+        nodeId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        workerId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        executorKind: { $ref: '#/components/schemas/ProviderNeutralId' }
+        runtimeProfile: { $ref: '#/components/schemas/WorkspacePolicyRef' }
+      additionalProperties: false
+    WorkerExecutionTarget:
+      type: object
+      description: >-
+        The execution identity the dispatching Node reserved for this command, and the executor its session
+        binding names. The Node builds both from one reservation. The Worker compares every field with its own
+        configured identity before it reserves or launches anything; a difference is the definite
+        axis.worker.identity_mismatch 409. A session binding whose workerId or executorId disagrees with this target is
+        a malformed command. Cancel carries no execution target.
+      required: [identity, sessionBindingExecutorId]
+      properties:
+        identity: { $ref: '#/components/schemas/WorkerExecutionIdentity' }
+        sessionBindingExecutorId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    WorkerCommandStart:
+      type: object
+      required: [contractVersion, commandId, command, start, instruction, workspacePolicyRef, executionTarget]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: start }
+        start: { $ref: '#/components/schemas/WorkerRunStartEnvelope' }
+        instruction: { type: string, minLength: 1, writeOnly: true, description: "Ephemeral and never persisted in cleartext or returned. No independent character cap; the full serialized command must fit its transport byte budget (the Node pending command budget is 64334 bytes)." }
+        workspacePolicyRef:
+          oneOf:
+            - $ref: '#/components/schemas/WorkspacePolicyRef'
+            - type: 'null'
+        executionTarget: { $ref: '#/components/schemas/WorkerExecutionTarget' }
+      additionalProperties: false
+    WorkerCommandContinue:
+      type: object
+      required: [contractVersion, commandId, command, start, instruction, continuation, workspacePolicyRef, executionTarget]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: continue }
+        start: { $ref: '#/components/schemas/WorkerRunStartEnvelope' }
+        instruction: { type: string, minLength: 1, writeOnly: true, description: "Ephemeral and never persisted in cleartext or returned. No independent character cap; the full serialized command must fit its transport byte budget (the Node pending command budget is 64334 bytes)." }
+        continuation:
+          type: object
+          required: [priorRunId]
+          properties: { priorRunId: { $ref: '#/components/schemas/ProviderNeutralId' } }
+          additionalProperties: false
+        workspacePolicyRef:
+          oneOf:
+            - $ref: '#/components/schemas/WorkspacePolicyRef'
+            - type: 'null'
+        executionTarget: { $ref: '#/components/schemas/WorkerExecutionTarget' }
+      additionalProperties: false
+    WorkerCommandCancel:
+      type: object
+      required: [contractVersion, commandId, command, target]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: cancel }
+        target:
+          type: object
+          required: [runId]
+          properties: { runId: { $ref: '#/components/schemas/ProviderNeutralId' } }
+          additionalProperties: false
+      additionalProperties: false
+    WorkerCommandSteer:
+      type: object
+      description: >-
+        Hands one more instruction to the target Run's running turn without interrupting it.
+        Answered `steered` when the executor took it, or `interrupt_requested` (the cancel path) when the
+        executor has no steer capability, the turn was already finishing, or the Run had already
+        ended succeeded, failed or waiting_for_input, which is answered without calling the executor. A `cancel`
+        for such a Run is answered `interrupt_requested` the same way. The command uses Worker version 1.0.0.
+      required: [contractVersion, commandId, command, target, instruction]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: steer }
+        target:
+          type: object
+          required: [runId]
+          properties: { runId: { $ref: '#/components/schemas/ProviderNeutralId' } }
+          additionalProperties: false
+        instruction: { type: string, minLength: 1, writeOnly: true, description: "Ephemeral and never persisted in cleartext or returned. No independent character cap; the full serialized command must fit its transport byte budget (the Node pending command budget is 64334 bytes)." }
+      additionalProperties: false
+    WorkerCommand:
+      description: Closed command union. The workspace reference is opaque; no path field exists. Start and continue carry the execution target; cancel and steer do not.
+      oneOf:
+        - $ref: '#/components/schemas/WorkerCommandStart'
+        - $ref: '#/components/schemas/WorkerCommandContinue'
+        - $ref: '#/components/schemas/WorkerCommandCancel'
+        - $ref: '#/components/schemas/WorkerCommandSteer'
+    WorkerCommandResponse:
+      oneOf:
+        - type: object
+          required: [contractVersion, commandId, status, identity, runAccepted]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { const: accepted }
+            identity: { $ref: '#/components/schemas/WorkerExecutionIdentity' }
+            runAccepted: { $ref: '#/components/schemas/RunAcceptedEnvelope' }
+          additionalProperties: false
+        - type: object
+          required: [contractVersion, commandId, status, runId]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { const: interrupt_requested }
+            runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+          additionalProperties: false
+        - type: object
+          description: Only a `steer` is answered `steered`; a `steer` may also be answered `interrupt_requested`.
+          required: [contractVersion, commandId, status, runId]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { const: steered }
+            runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+          additionalProperties: false
+    ElicitationOption:
+      type: object
+      required: [optionId, replyValue, label, description]
+      properties:
+        optionId: { type: string, pattern: '^axis-option-[a-f0-9]{48}$' }
+        replyValue:
+          type: string
+          pattern: '^axis-reply-[a-f0-9]{48}$'
+          description: Deterministically derived from the enclosing decisionId and this optionId; labels are never accepted as replies.
+        label: { type: string, minLength: 1, maxLength: 80 }
+        description: { type: string, minLength: 1, maxLength: 256 }
+      additionalProperties: false
+    StructuredElicitation:
+      oneOf:
+        - $ref: '#/components/schemas/FixedStructuredElicitation'
+        - $ref: '#/components/schemas/OtherStructuredElicitation'
+    FixedStructuredElicitation:
+      type: object
+      description: Closed decision display; credentials, absolute filesystem paths, controls, bidi controls, and normalized duplicate labels are rejected.
+      required: [contractVersion, decisionId, sourceEventId, recommendedOptionId, header, question, options]
+      properties:
+        contractVersion: { const: 1.0.0-fixed-choice }
+        decisionId: { type: string, pattern: '^axis-decision-[a-f0-9]{48}$' }
+        sourceEventId: { type: string, pattern: '^axis-elicitation-[a-f0-9]{48}$' }
+        recommendedOptionId:
+          type: string
+          pattern: '^axis-option-[a-f0-9]{48}$'
+          description: Exact optionId of the first option; the pinned native tool contract places the recommended choice first.
+        header: { type: string, minLength: 1, maxLength: 64 }
+        question: { type: string, minLength: 1, maxLength: 512 }
+        options:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items: { $ref: '#/components/schemas/ElicitationOption' }
+      additionalProperties: false
+    OtherStructuredElicitation:
+      type: object
+      description: Closed decision display; credentials, absolute filesystem paths, controls, bidi controls, and normalized duplicate labels are rejected.
+      required: [contractVersion, decisionId, sourceEventId, recommendedOptionId, header, question, options, other]
+      properties:
+        contractVersion: { const: 1.0.0-other }
+        decisionId: { type: string, pattern: '^axis-decision-[a-f0-9]{48}$' }
+        sourceEventId: { type: string, pattern: '^axis-elicitation-[a-f0-9]{48}$' }
+        recommendedOptionId:
+          type: string
+          pattern: '^axis-option-[a-f0-9]{48}$'
+          description: Exact optionId of the first option; the pinned native tool contract places the recommended choice first.
+        header: { type: string, minLength: 1, maxLength: 64 }
+        question: { type: string, minLength: 1, maxLength: 512 }
+        other:
+          type: object
+          required: [optionId, replyValue]
+          properties:
+            optionId: { type: string, pattern: '^axis-option-[a-f0-9]{48}$' }
+            replyValue: { type: string, pattern: '^axis-reply-[a-f0-9]{48}$' }
+          additionalProperties: false
+        options:
+          type: array
+          minItems: 2
+          maxItems: 3
+          items: { $ref: '#/components/schemas/ElicitationOption' }
+      additionalProperties: false
+    RunWaitingForInputEnvelope:
+      type: object
+      description: Bare Linear Worker waiting extension at 1.0.0, with Runtime-versioned Task, Attempt, and Run identities and a structured elicitation.
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, attempt, run, elicitation]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: worker }
+        consumer: { const: router }
+        envelopeType: { const: run.waiting_for_input }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run:
+          type: object
+          required: [contractVersion, runId, taskId, attemptId, sessionBindingId, correlationId, state]
+          properties:
+            contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+            runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            state: { const: waiting_for_input }
+          additionalProperties: false
+        elicitation: { $ref: '#/components/schemas/StructuredElicitation' }
+      additionalProperties: false
+    WorkerSessionBinding:
+      description: Router-owned binding identity. Native app-server identifiers are intentionally not part of the command surface.
+      type: object
+      required: [contractVersion, sessionBindingId, taskId, attemptId, runId, correlationId, workerId, executorId]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        workerId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        executorId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    WorkerRuntimeIdentityGraph:
+      type: object
+      required: [contractVersion, task, attempt, run, sessionBinding]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        task: { $ref: '#/components/schemas/Task' }
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        run: { $ref: '#/components/schemas/Run' }
+        sessionBinding: { $ref: '#/components/schemas/WorkerSessionBinding' }
+      additionalProperties: false
+    WorkerRunStartEnvelope:
+      description: Router-to-Worker Runtime v1 start envelope with the optional native-session field closed out.
+      type: object
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, identity]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: router }
+        consumer: { const: worker }
+        envelopeType: { const: run.start }
+        identity: { $ref: '#/components/schemas/WorkerRuntimeIdentityGraph' }
+      additionalProperties: false
+    RunProjection:
+      type: object
+      required: [runId, state]
+      properties:
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        state: { $ref: '#/components/schemas/RuntimeState' }
+        error: { $ref: '#/components/schemas/RuntimeError' }
+        resultRef: { $ref: '#/components/schemas/ResultRef' }
+      additionalProperties: false
+    RouterTaskRuntimeEvent:
+      description: Published Runtime v1 Router-to-Relay task projection; no Attempt, binding, instruction, or native identifier is present.
+      type: object
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, run]
+      properties:
+        contractVersion: { $ref: '#/components/schemas/ContractVersion' }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: router }
+        consumer: { const: relay }
+        envelopeType: { enum: [task.accepted, task.progressed, task.succeeded, task.failed] }
+        task: { $ref: '#/components/schemas/Task' }
+        run: { $ref: '#/components/schemas/RunProjection' }
+        progress: { $ref: '#/components/schemas/Progress' }
+        resultRef: { $ref: '#/components/schemas/ResultRef' }
+        error: { $ref: '#/components/schemas/RuntimeError' }
+      additionalProperties: false
+    RouterTaskWaitingRunProjection:
+      type: object
+      required: [runId, state]
+      properties:
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        state: { const: waiting_for_input }
+      additionalProperties: false
+    RouterTaskWaitingForInputEnvelope:
+      description: Closed Router 1.0.0 waiting projection; the current Run is terminal while the AgentSession remains open.
+      type: object
+      required: [contractVersion, messageId, correlationId, operationId, causationMessageId, occurredAt, producer, consumer, envelopeType, task, run, attemptId, elicitation]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        messageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        operationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        causationMessageId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        occurredAt: { type: string, format: date-time }
+        producer: { const: router }
+        consumer: { const: relay }
+        envelopeType: { const: task.waiting_for_input }
+        task: { $ref: '#/components/schemas/Task' }
+        run: { $ref: '#/components/schemas/RouterTaskWaitingRunProjection' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        elicitation: { $ref: '#/components/schemas/StructuredElicitation' }
+      additionalProperties: false
+    RouterTaskEvent:
+      oneOf:
+        - $ref: '#/components/schemas/RouterTaskRuntimeEvent'
+        - $ref: '#/components/schemas/RouterTaskWaitingForInputEnvelope'
+    VersionedReference:
+      type: object
+      required: [ref, version]
+      properties:
+        ref: { $ref: '#/components/schemas/ProviderNeutralId' }
+        version: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    RouterRunLifecycleEvent:
+      description: >-
+        One Worker run lifecycle event as validateRouterWorkerLifecycleEvent accepts it (RouterRunLifecycleEnvelope):
+        run.accepted, run.progressed, run.succeeded, run.failed, the run_agent_response delivery, or the bare Linear
+        run.waiting_for_input extension. Runtime identities use contractVersion 1.0.0; the Linear waiting extension
+        keeps contractVersion 1.0.0 and carries the validated elicitation directly.
+      anyOf:
+        - $ref: '#/components/schemas/RunAcceptedEnvelope'
+        - $ref: '#/components/schemas/RunProgressedEnvelope'
+        - $ref: '#/components/schemas/RunSucceededEnvelope'
+        - $ref: '#/components/schemas/RunFailedEnvelope'
+        - $ref: '#/components/schemas/RunAgentResponseDelivery'
+        - $ref: '#/components/schemas/RunWaitingForInputEnvelope'
+    RouterNodeEventHttpRequest:
+      type: object
+      required: [contractVersion, nodeRef, origin, envelope, recordedAt]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+        origin: { $ref: '#/components/schemas/WorkerExecutionIdentity' }
+        envelope: { $ref: '#/components/schemas/RouterRunLifecycleEvent' }
+        recordedAt: { type: string, description: When the Node journaled the event. }
+      additionalProperties: false
+    RouterNodeEventHttpResponse:
+      type: object
+      required: [contractVersion, nodeRef, sourceMessageId, runId, status, replayed]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+        sourceMessageId: { type: string }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        status: { type: string, enum: [buffered, projected] }
+        replayed: { type: boolean }
+      additionalProperties: false
+    NodeWorkerEventRequest:
+      type: object
+      required: [envelope, recordedAt]
+      properties:
+        envelope: { $ref: '#/components/schemas/RouterRunLifecycleEvent' }
+        recordedAt: { type: string, format: date-time, description: Canonical toISOString() form. }
+      additionalProperties: false
+    NodeWorkerEventReceipt:
+      type: object
+      required: [eventId, replayed, recordedAt]
+      properties:
+        eventId: { type: string }
+        replayed: { type: boolean }
+        recordedAt: { type: string }
+      additionalProperties: false
+    NodeMaintenanceRequest:
+      type: object
+      required: [contractVersion, mode]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        mode: { type: string, enum: [drain, resume] }
+      additionalProperties: false
+    NodeMaintenanceStatus:
+      type: object
+      description: Closed five-key status. idle is true exactly when every blocker count is zero.
+      required: [contractVersion, nodeRef, mode, idle, blockerCounts]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+        mode: { type: string, enum: [drain, resume] }
+        idle: { type: boolean }
+        blockerCounts:
+          type: object
+          required: [reservedCommands, dispatchingCommands, ambiguousCommands, pendingNodeEvents, quarantinedNodeEvents, activeWorkerRuns, pendingWorkerOutbox, unknownWorkerEvidence]
+          properties:
+            reservedCommands: { type: integer, minimum: 0 }
+            dispatchingCommands: { type: integer, minimum: 0 }
+            ambiguousCommands: { type: integer, minimum: 0 }
+            pendingNodeEvents: { type: integer, minimum: 0 }
+            quarantinedNodeEvents: { type: integer, minimum: 0 }
+            activeWorkerRuns: { type: integer, minimum: 0 }
+            pendingWorkerOutbox: { type: integer, minimum: 0 }
+            unknownWorkerEvidence: { type: integer, minimum: 0 }
+          additionalProperties: false
+      additionalProperties: false
+    NodeReadiness:
+      type: object
+      description: Aggregate evidence, intentionally not an overall Node ready/not-ready verdict.
+      required: [contractVersion, nodeRef, observedAt, service, storage, workers]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+        observedAt: { type: string }
+        service:
+          type: object
+          required: [status]
+          properties: { status: { const: configured } }
+          additionalProperties: false
+        storage:
+          type: object
+          required: [status]
+          properties:
+            status: { type: string, enum: [available, unavailable] }
+            safeCode: { const: axis.node.storage_unavailable }
+          additionalProperties: false
+        workers:
+          type: array
+          items:
+            type: object
+            required: [workerId, transport, readinessSupport]
+            properties:
+              workerId: { $ref: '#/components/schemas/ProviderNeutralId' }
+              transport: { type: string, enum: [reachable, degraded, unknown] }
+              readinessSupport: { type: string, enum: [supported, unsupported] }
+              readiness: { $ref: '#/components/schemas/CodexWorkerReadiness' }
+            additionalProperties: false
+      additionalProperties: false
+    WorkerSelection:
+      type: object
+      description: >-
+        What a command says about which local Worker should run it. It carries routing FACTS and no
+        decision: the source's scope and its fixed claude/codex executor labels. The Node
+        alone turns that into a Worker, applying executor label, then Team rule, then its
+        default. The shape is closed; a payload using `key` or `default` variants is refused as malformed rather
+        than reinterpreted. The discriminator is exactly kind=policy; Worker selection is
+        derived only from the declared scope and executor labels.
+      required: [kind, scope, executorLabels]
+      properties:
+        kind: { const: policy }
+        scope: { $ref: '#/components/schemas/WorkerSelectionScope' }
+        executorLabels:
+          type: array
+          description: >-
+            The executor labels present on the source, deduplicated and in the fixed order
+            claude, codex. Canonical order is part of the contract rather than a
+            convenience: the selection is digested into bindingDigest, so the same routing
+            facts must serialise identically whatever order the provider listed them in. Two or
+            more entries is a refusal (axis.node.selection_conflict), not a precedence question.
+            These are executor names, not the source's label text: the Relay maps a bare
+            claude/codex label, or a WORKER group label such as WORKER:CODEX
+            (case-insensitive), onto the matching name, and both spellings of one
+            executor yield one entry.
+          items: { type: string, enum: [claude, codex] }
+          uniqueItems: true
+          maxItems: 4
+      additionalProperties: false
+    WorkerSelectionScope:
+      type: object
+      description: >-
+        The Linear source a Node matches its Team rules against. The same
+        {system, tenantId, scopeId} triple is frozen into the Router target snapshot:
+        the tenant is the organization and the scope is the Team.
+      required: [system, tenantId, scopeId]
+      properties:
+        system: { type: string, enum: [linear] }
+        tenantId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        scopeId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    NodeTarget:
+      type: object
+      required: [endpointRef, identity, sessionBindingExecutorId]
+      properties:
+        endpointRef: { $ref: '#/components/schemas/VersionedReference' }
+        identity: { $ref: '#/components/schemas/WorkerExecutionIdentity' }
+        sessionBindingExecutorId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    NodeReservationEvidence:
+      type: object
+      description: Immutable routing reservation. It is not evidence that a Worker executed.
+      required: [workerKey, target]
+      properties:
+        workerKey: { $ref: '#/components/schemas/ProviderNeutralId' }
+        target: { $ref: '#/components/schemas/NodeTarget' }
+      additionalProperties: false
+    NodeSessionBinding:
+      type: object
+      description: Runtime session binding without nativeSessionRef. contractVersion is any accepted Runtime boundary version.
+      required: [contractVersion, sessionBindingId, taskId, attemptId, runId, correlationId, workerId, executorId]
+      properties:
+        contractVersion: { type: string }
+        sessionBindingId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        taskId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        attemptId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        runId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        correlationId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        workerId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        executorId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    NodeKnownWorkerFailure:
+      type: object
+      description: A known Worker failure code with its fixed safe message and certainty.
+      required: [code, safeMessage, certainty]
+      properties:
+        code: { type: string }
+        safeMessage: { type: string }
+        certainty: { type: string, enum: [definite, ambiguous] }
+      additionalProperties: false
+    NodePendingRunStartEnvelope:
+      type: object
+      description: >-
+        A Runtime run.start envelope (see WorkerRunStartEnvelope) whose identity.sessionBinding carries exactly
+        contractVersion, sessionBindingId, taskId, attemptId, runId and correlationId -- no workerId or executorId.
+        The Node completes both from its reservation. Validated by the pinned Runtime boundary validator.
+      additionalProperties: true
+    NodeCommandStart:
+      type: object
+      required: [contractVersion, commandId, command, start, instruction, workspacePolicyRef]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: start }
+        start: { $ref: '#/components/schemas/NodePendingRunStartEnvelope' }
+        instruction: { type: string, minLength: 1, writeOnly: true }
+        workspacePolicyRef:
+          oneOf:
+            - $ref: '#/components/schemas/VersionedReference'
+            - type: 'null'
+      additionalProperties: false
+    NodeCommandContinue:
+      type: object
+      required: [contractVersion, commandId, command, start, instruction, continuation, workspacePolicyRef]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: continue }
+        start: { $ref: '#/components/schemas/NodePendingRunStartEnvelope' }
+        instruction: { type: string, minLength: 1, writeOnly: true }
+        continuation:
+          type: object
+          required: [priorRunId]
+          properties: { priorRunId: { $ref: '#/components/schemas/ProviderNeutralId' } }
+          additionalProperties: false
+        workspacePolicyRef:
+          oneOf:
+            - $ref: '#/components/schemas/VersionedReference'
+            - type: 'null'
+      additionalProperties: false
+    NodeCommandCancel:
+      type: object
+      required: [contractVersion, commandId, command, target]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: cancel }
+        target:
+          type: object
+          required: [runId]
+          properties: { runId: { $ref: '#/components/schemas/ProviderNeutralId' } }
+          additionalProperties: false
+      additionalProperties: false
+    NodeCommandSteer:
+      type: object
+      description: >-
+        Forwards a soft steer to the Worker running target.runId, which must be the predecessor route's Run.
+        The Node sends the Worker command 1.0.0 steer without executionTarget; its accepted receipt's result is
+        `steered` or `interrupt_requested`. A draining Node forwards it, as it does a cancel; a fresh start
+        or continue is refused with the definite axis.node.draining before anything is recorded, and a
+        replayed command still reserved or dispatching with axis.node.recovery_required. An exact axis.worker.malformed response is recorded as a definite `rejected`
+        receipt. The Node command contract version is 1.0.0.
+      required: [contractVersion, commandId, command, target, instruction]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+        command: { const: steer }
+        target:
+          type: object
+          required: [runId]
+          properties: { runId: { $ref: '#/components/schemas/ProviderNeutralId' } }
+          additionalProperties: false
+        instruction: { type: string, minLength: 1, writeOnly: true }
+      additionalProperties: false
+    NodeCommandRequest:
+      type: object
+      required: [contractVersion, nodeRef, target, command]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+        target:
+          type: object
+          required: [selection]
+          properties: { selection: { $ref: '#/components/schemas/WorkerSelection' } }
+          additionalProperties: false
+        command:
+          oneOf:
+            - $ref: '#/components/schemas/NodeCommandStart'
+            - $ref: '#/components/schemas/NodeCommandContinue'
+            - $ref: '#/components/schemas/NodeCommandCancel'
+            - $ref: '#/components/schemas/NodeCommandSteer'
+      additionalProperties: false
+    NodeReceiptQuery:
+      type: object
+      required: [contractVersion, nodeRef, commandId]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+        commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+      additionalProperties: false
+    NodeReceipt:
+      oneOf:
+        - type: object
+          required: [contractVersion, nodeRef, commandId, status, evidence, result]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { const: accepted }
+            evidence:
+              type: object
+              required: [workerKey, target, sessionBinding]
+              properties:
+                workerKey: { $ref: '#/components/schemas/ProviderNeutralId' }
+                target: { $ref: '#/components/schemas/NodeTarget' }
+                sessionBinding: { $ref: '#/components/schemas/NodeSessionBinding' }
+              additionalProperties: false
+            result: { $ref: '#/components/schemas/WorkerCommandResponse' }
+          additionalProperties: false
+        - type: object
+          required: [contractVersion, nodeRef, commandId, status, reservation, failure]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { const: rejected }
+            reservation: { $ref: '#/components/schemas/NodeReservationEvidence' }
+            failure: { $ref: '#/components/schemas/NodeKnownWorkerFailure' }
+          additionalProperties: false
+        - type: object
+          required: [contractVersion, nodeRef, commandId, status, reservation]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { type: string, enum: [reserved, dispatching, ambiguous] }
+            reservation: { $ref: '#/components/schemas/NodeReservationEvidence' }
+          additionalProperties: false
+        - type: object
+          required: [contractVersion, nodeRef, commandId, status]
+          properties:
+            contractVersion: { const: 1.0.0 }
+            nodeRef: { $ref: '#/components/schemas/VersionedReference' }
+            commandId: { $ref: '#/components/schemas/ProviderNeutralId' }
+            status: { const: not_found }
+          additionalProperties: false
+    Accepted:
+      type: object
+      required: [accepted, duplicate]
+      properties:
+        accepted: { type: boolean, const: true }
+        duplicate: { type: boolean }
+      additionalProperties: false
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [live, ready, not_ready] }
+      additionalProperties: false
+    Diagnostics:
+      type: object
+      required: [status, vault, stores]
+      properties:
+        status: { type: string, enum: [healthy, degraded] }
+        vault: { type: boolean, description: Whether the credential vault is readable. }
+        stores:
+          type: object
+          description: One verdict per store the channel opened, keyed by the composition's own store name.
+          additionalProperties: { type: boolean }
+      additionalProperties: false
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+          additionalProperties: false
+      additionalProperties: false
+    RouterHttpErrorCode:
+      type: string
+      description: Closed Router listener error codes (HttpErrorCode and messages in src/router/http.ts).
+      enum:
+        - axis.router.malformed
+        - axis.router.unauthorized
+        - axis.router.body_too_large
+        - axis.router.unsupported_media
+        - axis.router.intent_conflict
+        - axis.router.conflict
+        - axis.router.protocol_violation
+        - axis.router.recovery_required
+        - axis.router.worker_rejected
+    RouterError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { $ref: '#/components/schemas/RouterHttpErrorCode' }
+            message: { type: string }
+          additionalProperties: false
+      additionalProperties: false
+    NodeErrorCode:
+      type: string
+      description: >-
+        Closed Node error codes (errors and NODE_ERROR_STATUS in src/shared/router-node.ts) with their defined HTTP
+        status: axis.node.malformed=400, axis.node.unauthorized=401, axis.node.target_forbidden=403,
+        axis.node.target_unknown=404, axis.node.worker_unavailable=409, axis.node.selection_conflict=409, axis.node.intent_conflict=409,
+        axis.node.binding_conflict=409, axis.node.body_too_large=413, axis.node.unsupported_media=415,
+        axis.node.recovery_required=503, axis.node.draining=503, axis.node.dispatch_ambiguous=503,
+        axis.node.storage_unavailable=503. axis.node.draining is the one definite 5xx code. A wrong
+        method is axis.node.malformed at 405. Each safeMessage is fixed per code.
+      enum:
+        - axis.node.malformed
+        - axis.node.unauthorized
+        - axis.node.target_forbidden
+        - axis.node.target_unknown
+        - axis.node.worker_unavailable
+        - axis.node.selection_conflict
+        - axis.node.intent_conflict
+        - axis.node.binding_conflict
+        - axis.node.body_too_large
+        - axis.node.unsupported_media
+        - axis.node.recovery_required
+        - axis.node.draining
+        - axis.node.dispatch_ambiguous
+        - axis.node.storage_unavailable
+    NodeCommandError:
+      type: object
+      description: Node command listener error body.
+      required: [contractVersion, error]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        error:
+          type: object
+          required: [code, safeMessage]
+          properties:
+            code: { $ref: '#/components/schemas/NodeErrorCode' }
+            safeMessage: { type: string }
+          additionalProperties: false
+      additionalProperties: false
+    NodeErrorV1:
+      type: object
+      description: Node event listener error body (maintenance and Worker event ingress).
+      required: [contractVersion, error]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        error:
+          type: object
+          required: [code, safeMessage]
+          properties:
+            code: { $ref: '#/components/schemas/NodeErrorCode' }
+            safeMessage: { type: string }
+          additionalProperties: false
+      additionalProperties: false
+    WorkerHttpErrorCode:
+      type: string
+      description: Closed Worker listener error codes (WorkerHttpErrorCode and safeMessages in src/worker/http.ts).
+      enum:
+        - axis.worker.malformed
+        - axis.worker.unauthorized
+        - axis.worker.policy_forbidden
+        - axis.worker.identity_mismatch
+        - axis.worker.method_not_allowed
+        - axis.worker.body_too_large
+        - axis.worker.unsupported_media
+        - axis.worker.adapter_invalid
+        - axis.worker.launch_failed
+        - axis.worker.launch_ambiguous
+        - axis.worker.intent_conflict
+        - axis.worker.recovery_required
+        - axis.worker.operation_unsupported
+        - axis.worker.runtime_missing
+        - axis.worker.runtime_incompatible
+        - axis.worker.authentication_required
+        - axis.worker.probe_timeout
+        - axis.worker.capability_unavailable
+        - axis.worker.workspace_unavailable
+        - axis.worker.continuation_unresumable
+    WorkerError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { $ref: '#/components/schemas/WorkerHttpErrorCode' }
+            message: { type: string }
+          additionalProperties: false
+      additionalProperties: false
+  responses:
+    NodeCommandError:
+      description: >-
+        Node command listener refusal. 400 axis.node.malformed; 401 axis.node.unauthorized; 404
+        axis.node.target_unknown (unknown path); 409 axis.node.worker_unavailable, axis.node.intent_conflict or
+        axis.node.binding_conflict; 413 axis.node.body_too_large; 415 axis.node.unsupported_media; 503
+        axis.node.recovery_required, axis.node.draining (a fresh start or continue while draining),
+        axis.node.dispatch_ambiguous or axis.node.storage_unavailable (also any
+        unclassified failure and every request during shutdown). axis.node.target_forbidden is not raised here.
+      content: { application/json: { schema: { $ref: '#/components/schemas/NodeCommandError' } } }
+    NodeEventListenerError:
+      description: >-
+        Node event listener refusal. 400 axis.node.malformed; 401 axis.node.unauthorized; 403
+        axis.node.target_forbidden; 404 axis.node.target_unknown (unknown path, or a Run with no accepted route); 413
+        axis.node.body_too_large; 415 axis.node.unsupported_media; 503 axis.node.storage_unavailable (also any
+        unclassified failure and every request during shutdown).
+      content: { application/json: { schema: { $ref: '#/components/schemas/NodeErrorV1' } } }
+    LinearApiResult:
+      description: >-
+        Upstream GraphQL envelope/status, or a local GraphQL error with a safe
+        code, requestId and outcome in extensions. 400 may be Linear RATELIMITED;
+        200 may contain errors or a mutation success:false. Mutation transport,
+        deadline, redirect, malformed/oversized responses and upstream 5xx produce
+        502 linear.proxy.outcome_unknown. Valid 5xx data/errors remain alongside
+        the uncertainty error. Reconcile before retry. 503 also covers unwired
+        authority, pre-dispatch OAuth/audit failures and local capacity. See
+        docs/LINEAR-API-PROXY.md for the full error-code and quota-header table.
+      headers:
+        Cache-Control: { schema: { type: string, const: no-store } }
+        X-Axis-Request-Id: { schema: { type: string, format: uuid } }
+        X-Axis-Linear-Outcome:
+          schema: { type: string, enum: [not_dispatched, response_received, graphql_errors, partial, upstream_error, outcome_unknown] }
+        X-Axis-Linear-Audit: { schema: { type: string, enum: [recorded, unavailable] } }
+        Retry-After: { schema: { type: string } }
+        X-RateLimit-Requests-Limit: { schema: { type: string } }
+        X-RateLimit-Requests-Remaining: { schema: { type: string } }
+        X-RateLimit-Requests-Reset: { schema: { type: string } }
+        X-RateLimit-Endpoint-Requests-Limit: { schema: { type: string } }
+        X-RateLimit-Endpoint-Requests-Remaining: { schema: { type: string } }
+        X-RateLimit-Endpoint-Requests-Reset: { schema: { type: string } }
+        X-RateLimit-Endpoint-Name: { schema: { type: string } }
+        X-Complexity: { schema: { type: string } }
+        X-RateLimit-Complexity-Limit: { schema: { type: string } }
+        X-RateLimit-Complexity-Remaining: { schema: { type: string } }
+        X-RateLimit-Complexity-Reset: { schema: { type: string } }
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+            anyOf:
+              - required: [data]
+              - required: [errors]
+            properties:
+              data: { type: [object, 'null'], additionalProperties: true }
+              errors:
+                type: array
+                minItems: 1
+                items:
+                  type: object
+                  required: [message]
+                  additionalProperties: true
+                  properties:
+                    message: { type: string }
+                    extensions: { type: object, additionalProperties: true }
+    BadRequest:
+      description: Malformed owned input.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Authentication, timestamp, state, or authority rejected.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: The configured principal, installation, Team, or target is not allowed.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: A durable transport or source-event identity conflicts with prior authenticated content.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    TooLarge:
+      description: Request exceeds the route-specific raw-body bound.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    UnsupportedMedia:
+      description: Media type or content encoding is unsupported.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    WorkerUnauthorized:
+      description: Worker bearer authorization is missing, malformed, duplicated, or incorrect.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerPolicyForbidden:
+      description: Worker/Executor identity or configured organization workspace policy is not allowed.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerBodyTooLarge:
+      description: Worker request exceeds 65,536 raw bytes.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerUnsupportedMedia:
+      description: Worker request media type or encoding is unsupported.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerMalformed:
+      description: Strict command framing (an exact 1.0.0 contractVersion and a well-formed executionTarget consistent with the session binding), workspace reference validation, closed-body parsing, or Runtime v1 start envelope validation failed.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerConflict:
+      description: >-
+        Command idempotency, immutable run intent, or active-run state conflicts with durable Worker state; or
+        (axis.worker.identity_mismatch) the command's executionTarget is not this Worker's configured
+        identity, refused before any Run is reserved or launched.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerLaunchFailed:
+      description: A well-formed executor start was deterministically rejected. The reservation is observational and is not retried.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    WorkerUnavailable:
+      description: No trusted mapped/default/fallback directory is usable, old active durable state requires recovery, workspace audit persistence failed, or the executor lifecycle cannot be safely recovered. Workspace failures use fixed code axis.worker.workspace_unavailable and expose no path or filesystem diagnostic.
+      content: { application/json: { schema: { $ref: '#/components/schemas/WorkerError' } } }
+    Unavailable:
+      description: Durable acceptance or readiness unavailable.
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }

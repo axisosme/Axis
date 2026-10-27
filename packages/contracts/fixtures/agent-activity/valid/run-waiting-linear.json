@@ -1,0 +1,147 @@
+{
+  "contractVersion": "1.0.0",
+  "deliveryType": "run_agent_waiting",
+  "envelope": {
+    "contractVersion": "1.0.0",
+    "messageId": "fx-run-waiting-2",
+    "correlationId": "fx-corr-2",
+    "operationId": "fx-op-2",
+    "causationMessageId": "fx-executor-waiting-2",
+    "occurredAt": "2026-09-05T00:00:03Z",
+    "producer": "worker",
+    "consumer": "router",
+    "envelopeType": "run.waiting_for_input",
+    "task": {
+      "contractVersion": "1.0.0",
+      "taskId": "fx-task-2",
+      "correlationId": "fx-corr-2",
+      "sourceRef": {
+        "system": "linear",
+        "organizationId": "fx-org-1",
+        "issueId": "fx-issue-1",
+        "agentSessionId": "fx-session-1"
+      }
+    },
+    "attempt": {
+      "contractVersion": "1.0.0",
+      "attemptId": "fx-attempt-2",
+      "taskId": "fx-task-2",
+      "correlationId": "fx-corr-2"
+    },
+    "run": {
+      "contractVersion": "1.0.0",
+      "runId": "fx-run-2",
+      "taskId": "fx-task-2",
+      "attemptId": "fx-attempt-2",
+      "sessionBindingId": "fx-binding-2",
+      "correlationId": "fx-corr-2",
+      "state": "waiting_for_input",
+      "elicitation": {
+        "decisionId": "fx-decision-2",
+        "sourceEventId": "fx-event-2",
+        "recommendedOptionId": "opt-a",
+        "header": "Which approach?",
+        "question": "Pick a path forward.",
+        "options": [
+          {
+            "optionId": "opt-a",
+            "replyValue": "a",
+            "label": "Option A",
+            "description": "Take approach A"
+          },
+          {
+            "optionId": "opt-b",
+            "replyValue": "b",
+            "label": "Option B",
+            "description": "Take approach B"
+          },
+          {
+            "optionId": "opt-c",
+            "replyValue": "c",
+            "label": "Option C",
+            "description": "Take approach C"
+          }
+        ],
+        "other": {
+          "optionId": "other",
+          "replyValue": "other:"
+        }
+      }
+    },
+    "elicitation": {
+      "decisionId": "fx-decision-2",
+      "sourceEventId": "fx-event-2",
+      "recommendedOptionId": "opt-a",
+      "header": "Which approach?",
+      "question": "Pick a path forward.",
+      "options": [
+        {
+          "optionId": "opt-a",
+          "replyValue": "a",
+          "label": "Option A",
+          "description": "Take approach A"
+        },
+        {
+          "optionId": "opt-b",
+          "replyValue": "b",
+          "label": "Option B",
+          "description": "Take approach B"
+        },
+        {
+          "optionId": "opt-c",
+          "replyValue": "c",
+          "label": "Option C",
+          "description": "Take approach C"
+        }
+      ],
+      "other": {
+        "optionId": "other",
+        "replyValue": "other:"
+      }
+    }
+  },
+  "agentActivity": {
+    "contractVersion": "1.0.0",
+    "activityId": "fx-activity-2",
+    "taskId": "fx-task-2",
+    "attemptId": "fx-attempt-2",
+    "runId": "fx-run-2",
+    "conversation": {
+      "system": "linear",
+      "agentSessionId": "fx-session-1"
+    },
+    "sourceEventId": "fx-event-2",
+    "operationId": "fx-op-2",
+    "elicitation": {
+      "decisionId": "fx-decision-2",
+      "sourceEventId": "fx-event-2",
+      "recommendedOptionId": "opt-a",
+      "header": "Which approach?",
+      "question": "Pick a path forward.",
+      "options": [
+        {
+          "optionId": "opt-a",
+          "replyValue": "a",
+          "label": "Option A",
+          "description": "Take approach A"
+        },
+        {
+          "optionId": "opt-b",
+          "replyValue": "b",
+          "label": "Option B",
+          "description": "Take approach B"
+        },
+        {
+          "optionId": "opt-c",
+          "replyValue": "c",
+          "label": "Option C",
+          "description": "Take approach C"
+        }
+      ],
+      "other": {
+        "optionId": "other",
+        "replyValue": "other:"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "AgentSessionEvent",
+  "action": "prompted",
+  "webhookId": "10000000-0000-4000-8000-000000000003",
+  "webhookTimestamp": 1787241600000,
+  "organizationId": "organization-fixture",
+  "appUserId": "app-user-fixture",
+  "agentSession": {
+    "id": "agent-session-fixture",
+    "status": "active",
+    "creator": { "id": "human-user-fixture" },
+    "issue": { "id": "issue-fixture", "team": { "id": "team-fixture" } }
+  },
+  "agentActivity": {
+    "id": "activity-human-stop",
+    "user": { "id": "human-user-fixture" },
+    "body": "Stop.",
+    "signal": "stop",
+    "createdAt": "2026-08-20T16:00:02.000Z"
+  },
+  "promptContext": null,
+  "guidance": null
+}

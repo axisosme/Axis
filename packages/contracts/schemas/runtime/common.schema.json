@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/runtime/common.schema.json",
+  "title": "Axis Runtime Common Types 1.0.0",
+  "$defs": {
+    "contractVersion": { "const": "1.0.0" },
+    "providerNeutralId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "sourceRef": { "$ref": "#/$defs/linearSourceRef" },
+    "linearSourceRef": {
+      "type": "object",
+      "properties": {
+        "system": { "const": "linear" },
+        "organizationId": { "$ref": "#/$defs/providerNeutralId" },
+        "issueId": { "$ref": "#/$defs/providerNeutralId" },
+        "agentSessionId": { "$ref": "#/$defs/providerNeutralId" }
+      },
+      "required": ["system", "organizationId", "issueId"],
+      "additionalProperties": false
+    },
+    "runtimeState": { "enum": ["pending", "running", "succeeded", "failed", "waiting_for_input"] },
+    "nativeSessionRef": {
+      "type": "object",
+      "properties": {
+        "runtimeKind": { "$ref": "#/$defs/providerNeutralId" },
+        "sessionId": { "$ref": "#/$defs/providerNeutralId" }
+      },
+      "required": ["runtimeKind", "sessionId"],
+      "additionalProperties": false
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "code": { "$ref": "#/$defs/providerNeutralId" },
+        "safeMessage": { "type": "string", "minLength": 1, "maxLength": 512 }
+      },
+      "required": ["code", "safeMessage"],
+      "additionalProperties": false
+    },
+    "resultRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "boundaryComponent": {
+      "enum": ["relay", "router", "worker", "codex-adapter"]
+    },
+    "methodRef": {
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/providerNeutralId" },
+        "method": { "$ref": "#/$defs/providerNeutralId" }
+      },
+      "required": ["version", "method"],
+      "additionalProperties": false
+    },
+    "progress": {
+      "type": "object",
+      "properties": {
+        "completed": { "type": "integer", "minimum": 0 },
+        "total": { "type": "integer", "minimum": 1 },
+        "safeMessage": { "type": "string", "minLength": 1, "maxLength": 512 }
+      },
+      "required": ["completed"],
+      "additionalProperties": false
+    },
+    "runProjection": {
+      "type": "object",
+      "properties": {
+        "runId": { "$ref": "#/$defs/providerNeutralId" },
+        "state": { "$ref": "#/$defs/runtimeState" },
+        "error": { "$ref": "#/$defs/runtimeError" },
+        "resultRef": { "$ref": "#/$defs/resultRef" },
+        "elicitation": { "$ref": "#/$defs/structuredElicitation" }
+      },
+      "required": ["runId", "state"],
+      "additionalProperties": false
+    },
+    "elicitationOption": {
+      "type": "object",
+      "properties": {
+        "optionId": { "$ref": "#/$defs/providerNeutralId" },
+        "replyValue": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      },
+      "required": ["optionId", "replyValue", "label", "description"],
+      "additionalProperties": false
+    },
+    "elicitationOther": {
+      "type": "object",
+      "properties": {
+        "optionId": { "$ref": "#/$defs/providerNeutralId" },
+        "replyValue": { "type": "string", "minLength": 1, "maxLength": 512 }
+      },
+      "required": ["optionId", "replyValue"],
+      "additionalProperties": false
+    },
+    "structuredElicitation": {
+      "type": "object",
+      "properties": {
+        "decisionId": { "$ref": "#/$defs/providerNeutralId" },
+        "sourceEventId": { "$ref": "#/$defs/providerNeutralId" },
+        "recommendedOptionId": { "$ref": "#/$defs/providerNeutralId" },
+        "header": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "question": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/elicitationOption" },
+          "minItems": 2,
+          "maxItems": 3
+        },
+        "other": { "$ref": "#/$defs/elicitationOther" }
+      },
+      "required": ["decisionId", "sourceEventId", "recommendedOptionId", "header", "question", "options"],
+      "additionalProperties": false
+    }
+  }
+}

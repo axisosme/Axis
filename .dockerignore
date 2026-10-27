@@ -1,0 +1,26 @@
+# Only build inputs enter the context; local configuration and state stay out.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.build.json
+!LICENSE
+!src/
+!src/**
+!packages/
+!packages/contracts/
+!packages/contracts/package.json
+!packages/contracts/tsconfig.json
+!packages/contracts/src/
+!packages/contracts/src/**
+!packages/contracts/test/
+!packages/contracts/test/**
+!packages/contracts/schemas/
+!packages/contracts/schemas/**
+!packages/contracts/fixtures/
+!packages/contracts/fixtures/**
+!packages/contracts/conformance/
+!packages/contracts/conformance/**
+!deploy/
+!deploy/docker/
+!deploy/docker/healthcheck.mjs

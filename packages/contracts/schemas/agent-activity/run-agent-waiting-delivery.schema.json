@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/axisosme/Axis/schemas/agent-activity/run-agent-waiting-delivery.schema.json",
+  "title": "Axis Run Agent Waiting Delivery 1.0.0",
+  "type": "object",
+  "properties": {
+    "contractVersion": { "const": "1.0.0" },
+    "deliveryType": { "const": "run_agent_waiting" },
+    "envelope": { "$ref": "https://github.com/axisosme/Axis/schemas/runtime/run-waiting-for-input-envelope.schema.json" },
+    "agentActivity": { "$ref": "agent-activity-elicitation-receipt.schema.json#/$defs/elicitationReceipt" }
+  },
+  "required": ["contractVersion", "deliveryType", "envelope", "agentActivity"],
+  "additionalProperties": false
+}

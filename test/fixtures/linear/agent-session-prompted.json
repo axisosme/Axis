@@ -1,0 +1,23 @@
+{
+  "type": "AgentSessionEvent",
+  "action": "prompted",
+  "webhookId": "10000000-0000-4000-8000-000000000002",
+  "webhookTimestamp": 1787241600000,
+  "organizationId": "organization-fixture",
+  "appUserId": "app-user-fixture",
+  "agentSession": {
+    "id": "agent-session-fixture",
+    "status": "active",
+    "creator": { "id": "human-user-fixture" },
+    "issue": { "id": "issue-fixture", "team": { "id": "team-fixture" } }
+  },
+  "agentActivity": {
+    "id": "activity-human-prompt",
+    "user": { "id": "human-user-fixture" },
+    "body": "Please continue with the tests.",
+    "signal": "continue",
+    "createdAt": "2026-08-20T16:00:01.000Z"
+  },
+  "promptContext": null,
+  "guidance": null
+}
