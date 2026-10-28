@@ -222,7 +222,8 @@ test("terminal prompts suppress secret echo and restore ordinary echo; EOF cance
     assert.equal(await secret, "hidden-credential");
     assert.doesNotMatch(output, /hidden-credential/u);
     const ordinary = prompts.ask("Team"); input.write("one\r"); assert.equal(await ordinary, "one");
-    assert.match(output, /one/u);
+    // A redraw clears from column 1; the label must be redrawn with the answer, not erased by it.
+    assert.match(output.slice(output.lastIndexOf("\u001b[0J")), /^\u001b\[0JTeam: .*one/u);
     const pending = prompts.ask("Pending"); input.end();
     await assert.rejects(pending);
   } finally { prompts.close(); input.destroy(); destination.end(); }

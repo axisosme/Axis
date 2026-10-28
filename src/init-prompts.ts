@@ -24,11 +24,14 @@ export function terminalInitPrompts(input: NodeJS.ReadableStream = process.stdin
   process.once("SIGINT", cancel);
   return {
     signal: cancelled.signal,
+    // Ordinary labels are readline's own prompt, so its line redraws keep them on screen; a secret label is written
+    // once, outside readline, because every redraw of the hidden line is suppressed.
     async ask(label, options = {}) {
-      destination.write(`${label}${options.secret ? " [hidden]" : ""}: `);
-      hidden = options.secret === true;
-      try { return await terminal.question("", { signal: cancelled.signal }); }
-      finally { hidden = false; if (options.secret) destination.write("\n"); }
+      const secret = options.secret === true;
+      if (secret) destination.write(`${label} [hidden]: `);
+      hidden = secret;
+      try { return await terminal.question(secret ? "" : `${label}: `, { signal: cancelled.signal }); }
+      finally { hidden = false; if (secret) destination.write("\n"); }
     },
     write: message => { destination.write(`${message}\n`); },
     close() { process.off("SIGTERM", cancel); process.off("SIGINT", cancel); terminal.close(); output.end(); },
