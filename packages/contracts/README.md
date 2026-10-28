@@ -1,6 +1,6 @@
 # Axis Contracts
 
-`@axisosme/axis-contracts` version `0.1.0` contains the current Runtime,
+`@axisosme/axis-contracts` version `1.0.0` contains the current Runtime,
 Agent Activity, and Linear execution contracts for Axis. Node.js 24 or newer
 is required. Every protocol accepts exactly `contractVersion: "1.0.0"`.
 

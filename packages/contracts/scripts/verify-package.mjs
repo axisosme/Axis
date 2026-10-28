@@ -11,7 +11,7 @@ import { runRuntimeV1Golden } from "../dist/src/runtime/golden.js";
 const execFileAsync = promisify(execFile);
 const root = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
 const contractVersion = "1.0.0";
-const packageVersion = "0.1.0";
+const packageVersion = "1.0.0";
 const resourceRoots = ["schemas/runtime", "schemas/agent-activity", "schemas/linear-execution", "fixtures/agent-activity", "conformance/runtime", "conformance/agent-activity", "docs"];
 const codeSubpaths = ["./runtime", "./agent-activity", "./linear-execution"];
 const resourceSubpaths = ["./schemas/*", "./fixtures/*", "./conformance/*"];

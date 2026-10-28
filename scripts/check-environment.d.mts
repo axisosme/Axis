@@ -1,4 +1,4 @@
-export const REQUIRED_CONTRACTS_VERSION: "0.1.0";
+export const REQUIRED_CONTRACTS_VERSION: "1.0.0";
 
 export interface CheckEnvironmentResult {
   readonly ok: boolean;

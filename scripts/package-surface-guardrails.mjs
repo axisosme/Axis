@@ -205,7 +205,7 @@ export function assertCurrentBuildArtifactInventory() {
 }
 
 export function assertPackageManifest(pkg) {
-  assert.equal(pkg.version, "0.1.0");
+  assert.equal(pkg.version, "1.0.0");
   assert.equal(pkg.private, true);
   assert.equal(pkg.scripts?.prepare, "npm run build");
   assert.equal(pkg.scripts?.prepack, "npm run build");
@@ -215,7 +215,7 @@ export function assertPackageManifest(pkg) {
   assert.deepEqual(pkg.files, ["dist", "axis.example.toml", "docs", "README.md", "CHANGELOG.md", "openapi.yaml", "LICENSE"], "package allowlist must keep repository agent instructions out of the package");
   assert.deepEqual(pkg.exports, { ".": { types: "./dist/index.d.ts", default: "./dist/index.js" }, "./linear": { types: "./dist/shared/linear-sdk.d.ts", default: "./dist/shared/linear-sdk.js" } });
   assert.deepEqual(pkg.bin, { "axis": "./dist/bin/axis.js", "axis-linear-cli": "./dist/bin/linear-cli.js", "axis-claude-worker": "./dist/bin/claude-worker.js", "axis-linear-relay": "./dist/bin/relay.js", "axis-codex-worker": "./dist/bin/worker.js", "axis-node": "./dist/bin/node.js", "axis-routing-preflight": "./dist/bin/routing-preflight.js" });
-  assert.deepEqual(pkg.dependencies, { "@axisosme/axis-contracts": "0.1.0", "@linear/sdk": "95.0.0", "@openai/codex": "0.165.0", "graphql": "16.14.2", "smol-toml": "1.8.0" });
+  assert.deepEqual(pkg.dependencies, { "@axisosme/axis-contracts": "1.0.0", "@linear/sdk": "95.0.0", "@openai/codex": "0.165.0", "graphql": "16.14.2", "smol-toml": "1.8.0" });
 }
 
 export function assertArchiveArtifacts(listing) {
@@ -249,7 +249,7 @@ export async function assertInstalledDependencyTree(consumer, installedRoot) {
   assert.equal(graphql.version, "16.14.2");
   const contractsRoot = join(consumer, "node_modules", "@axisosme", "axis-contracts");
   const contracts = JSON.parse(await readFile(join(contractsRoot, "package.json"), "utf8"));
-  assert.equal(contracts.version, "0.1.0");
+  assert.equal(contracts.version, "1.0.0");
   assert.deepEqual(Object.keys(contracts.exports).sort(), ["./runtime", "./agent-activity", "./linear-execution", "./schemas/*", "./fixtures/*", "./conformance/*"].sort());
   assert.ok(contracts.files.includes("LICENSE"), "contracts files must include LICENSE");
   const license = await readFile(join(installedRoot, "LICENSE"), "utf8");

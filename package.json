@@ -1,6 +1,6 @@
 {
   "name": "@axisosme/axis",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -66,7 +66,7 @@
     "preflight:node-routing": "npm run build --silent && node dist/bin/routing-preflight.js"
   },
   "dependencies": {
-    "@axisosme/axis-contracts": "0.1.0",
+    "@axisosme/axis-contracts": "1.0.0",
     "@linear/sdk": "95.0.0",
     "@openai/codex": "0.165.0",
     "graphql": "16.14.2",

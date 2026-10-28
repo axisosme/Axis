@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Axis Linear Relay API
-  version: 0.1.0
+  version: 1.0.0
   description: >-
     Durable authenticated Linear Relay. The only execution topology is Relay/Router -> Node (Node contract 1.0.0) ->
     Worker, each Worker a deployment-selected closed Codex or Claude Code executor; there is no direct

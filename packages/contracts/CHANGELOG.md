@@ -1,4 +1,4 @@
-## 0.1.0
+## 1.0.0
 
 Runtime identity and lifecycle contracts, Agent Activity waiting and response
 delivery, Linear execution credential exchange, strict offline validation,
