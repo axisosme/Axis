@@ -8,6 +8,11 @@ progress and results to the issue. Follow-up messages continue the same
 session; cancellation and durable delivery keep retries from starting duplicate
 work. The executor does the reasoning and coding; Axis coordinates its lifecycle.
 
+## Deploy with your agent
+
+Give this repository to your coding agent and ask it to deploy or upgrade Axis;
+it follows [the deployment skill](.agents/skills/axis-deploy/SKILL.md).
+
 ## Quick start: about 10 minutes
 
 You need Node **24**, npm, a Linear workspace where you can create and install

@@ -49,8 +49,8 @@ try {
   mkdirSync(artifacts, { recursive: true });
   mkdirSync(consumer, { recursive: true });
   for (const entry of [
-    "src", "docs", "scripts", ".npmrc", "package.json", "package-lock.json", "README.md", "CHANGELOG.md", "LICENSE", "openapi.yaml", "tsconfig.json", "tsconfig.build.json",
-  ]) cpSync(join(root, entry), join(staging, entry), { recursive: true });
+    "src", "docs", "scripts", ".agents", ".claude", ".npmrc", "package.json", "package-lock.json", "README.md", "CHANGELOG.md", "LICENSE", "openapi.yaml", "tsconfig.json", "tsconfig.build.json",
+  ]) cpSync(join(root, entry), join(staging, entry), { recursive: true, verbatimSymlinks: true });
   cpSync(join(root, "packages", "contracts"), join(staging, "packages", "contracts"), {
     recursive: true,
     filter: (path) => !["dist", "node_modules"].includes(path.split(/[\\/]/u).at(-1)),

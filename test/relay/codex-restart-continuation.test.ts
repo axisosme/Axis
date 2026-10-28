@@ -31,7 +31,7 @@ type Json = Readonly<Record<string, unknown>>;
 
 const THREAD_ID = "thread-codex-restart-1";
 const SIBLING_THREAD_ID = "thread-codex-restart-sibling";
-/** The query `threadResumable` sends, as measured against codex 0.153.4. */
+/** The query `threadResumable` sends; every field is a codex 0.165.0 `thread/list` parameter. */
 const LIST_QUERY = { archived: false, modelProviders: [], sourceKinds: ["cli", "vscode", "exec", "appServer", "unknown"], limit: 100 };
 
 /**

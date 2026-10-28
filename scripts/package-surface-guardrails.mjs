@@ -212,13 +212,17 @@ export function assertPackageManifest(pkg) {
   assert.deepEqual(pkg.workspaces, ["packages/contracts"]);
   assert.deepEqual(pkg.bundleDependencies, ["@axisosme/axis-contracts"]);
   assert.ok(pkg.files.includes("LICENSE"), "package files must include LICENSE");
+  assert.deepEqual(pkg.files, ["dist", "axis.example.toml", "docs", "README.md", "CHANGELOG.md", "openapi.yaml", "LICENSE"], "package allowlist must keep repository agent instructions out of the package");
   assert.deepEqual(pkg.exports, { ".": { types: "./dist/index.d.ts", default: "./dist/index.js" }, "./linear": { types: "./dist/shared/linear-sdk.d.ts", default: "./dist/shared/linear-sdk.js" } });
   assert.deepEqual(pkg.bin, { "axis": "./dist/bin/axis.js", "axis-linear-cli": "./dist/bin/linear-cli.js", "axis-claude-worker": "./dist/bin/claude-worker.js", "axis-linear-relay": "./dist/bin/relay.js", "axis-codex-worker": "./dist/bin/worker.js", "axis-node": "./dist/bin/node.js", "axis-routing-preflight": "./dist/bin/routing-preflight.js" });
-  assert.deepEqual(pkg.dependencies, { "@axisosme/axis-contracts": "0.1.0", "@linear/sdk": "95.0.0", "@openai/codex": "0.153.4", "graphql": "16.14.2", "smol-toml": "1.8.0" });
+  assert.deepEqual(pkg.dependencies, { "@axisosme/axis-contracts": "0.1.0", "@linear/sdk": "95.0.0", "@openai/codex": "0.165.0", "graphql": "16.14.2", "smol-toml": "1.8.0" });
 }
 
 export function assertArchiveArtifacts(listing) {
   assertDeclaredSurface();
+  for (const root of [".agents", ".claude"]) {
+    assert.equal(listing.some((path) => path === `package/${root}` || path.startsWith(`package/${root}/`)), false, `archive must exclude repository-only ${root}`);
+  }
   assert.equal(listing.includes("package/LICENSE"), true, "archive must include LICENSE");
   assert.equal(listing.includes("package/node_modules/@axisosme/axis-contracts/LICENSE"), true, "bundled contracts must include LICENSE");
   for (const path of activeDistArtifacts) assert.equal(listing.includes(`package/${path}`), true, `archive is missing ${path}`);

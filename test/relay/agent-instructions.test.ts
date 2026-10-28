@@ -154,7 +154,7 @@ async function codexDeveloperInstructions(options: {
   readonly onTurnInput?: (input: unknown) => void;
 }): Promise<string> {
   const server = fakeAppServer({
-    initialize: { userAgent: "codex-cli/0.153.4", codexHome: "/tmp/axis-codex-home" },
+    initialize: { userAgent: "codex-cli/0.165.0", codexHome: "/tmp/axis-codex-home" },
     "config/read": { config: options.inherited === undefined ? {} : { developer_instructions: options.inherited } },
   });
   const transport = new PackageLocalCodexAppServerTransport({

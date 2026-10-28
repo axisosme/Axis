@@ -292,8 +292,12 @@ function exactKeys(value: JsonRecord, keys: readonly string[]): boolean {
 export function classifyCodexTurnFailure(turn: unknown): ExecutorFailureKind | null {
   const candidate = record(turn);
   const error = record(candidate?.error);
-  if (candidate?.status !== "failed" || error === null || !exactKeys(error, ["message", "codexErrorInfo", "additionalDetails"])) return null;
-  if (typeof error.message !== "string" || !(error.additionalDetails === null || typeof error.additionalDetails === "string")) return null;
+  // `TurnError` requires only `message`; its other members may be omitted or null.
+  if (candidate?.status !== "failed" || error === null
+    || !Object.keys(error).every(key => ["message", "codexErrorInfo", "additionalDetails", "misalignment"].includes(key))) return null;
+  const additionalDetails = error.additionalDetails ?? null, misalignment = error.misalignment ?? null;
+  if (typeof error.message !== "string" || !(additionalDetails === null || typeof additionalDetails === "string")
+    || !(misalignment === null || record(misalignment) !== null)) return null;
   return error.codexErrorInfo === "serverOverloaded" ? "model_capacity" : null;
 }
 
@@ -878,7 +882,7 @@ export class PackageLocalCodexAppServerTransport implements CodexAppServerTransp
     const questions = item.questions ?? null;
     if (threadId === null || turnId === null || !Number.isSafeInteger(params.completedAtMs) || (params.completedAtMs as number) < 0
       || nonblank(item.id) === null || typeof item.text !== "string"
-      || !["commentary", "final_answer", null].includes(phase as string | null)
+      || !["commentary", "partial_answer", "final_answer", null].includes(phase as string | null)
       || !(delivery === null || delivery === "async")
       || !(memoryCitation === null || record(memoryCitation) !== null)
       || !(questions === null || (Array.isArray(questions) && questions.every((value: unknown) => {
@@ -889,6 +893,8 @@ export class PackageLocalCodexAppServerTransport implements CodexAppServerTransp
       this.#projectionRejected("invalid_agent_message");
       return;
     }
+    // A partial answer may still be revised or followed by tools; only the final answer is the response.
+    if (phase === "partial_answer") return;
     const nativeBinding = { runtimeKind: "codex", threadId, turnId } as const;
     if (item.phase === "commentary") {
       const commentary = normalizeExecutorCommentary(item.text);

@@ -64,7 +64,9 @@ terminates public TLS; the local hop stays on loopback. The tunnel requires no
 inbound port forwarding. Keep its credentials outside the repository and do
 not put an interactive Cloudflare Access login in front of the webhook: Linear
 cannot complete that login. The path rule limits forwarding to the two required
-routes; other requests get 404.
+routes; other requests get 404. If `cloudflared` logs QUIC connection failures,
+the network blocks outbound UDP; add `--protocol http2` to `cloudflared tunnel`
+to connect over TCP instead.
 
 ## ngrok
 

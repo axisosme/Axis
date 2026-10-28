@@ -209,7 +209,7 @@ new paths for a separate fresh installation and retain the previous state.
 
 The multi-stage Dockerfile uses Node 24.18.0 on Debian bookworm slim and copies
 only compiled application code, contract schemas and production dependencies
-into the runtime stage. It includes Codex 0.153.4. Repository tests, development
+into the runtime stage. It includes Codex 0.165.0. Repository tests, development
 dependencies, local TOML, data and credentials are excluded from the runtime.
 The image runs as `node` (UID/GID 1000), with data and executor state under
 `/var/lib/axis`. Application files remain owned by root. Images are built
@@ -467,7 +467,7 @@ a storage schema change requires the matching pre-upgrade backup; never run
 old and new binaries concurrently on the same volume.
 
 The Docker base uses an exact Node release tag, and `npm ci` consumes the
-lockfile, including exact Codex 0.153.4. Tags can be republished: deployments
+lockfile, including exact Codex 0.165.0. Tags can be republished: deployments
 requiring immutable operating-system bytes should record and pin the reviewed
 base-image digest and retain the built image. This example does not claim
 bit-for-bit reproducibility across mutable upstream base tags.

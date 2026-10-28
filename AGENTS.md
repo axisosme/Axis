@@ -4,6 +4,8 @@ Axis dispatches tasks to AI executors on worker nodes and tracks their execution
 lifecycle. Relay, Router, Node, Worker, provider, and executor components own
 distinct boundaries; preserve those responsibilities when making changes.
 
+For deployment and upgrade requests, use the [Axis deployment skill](.agents/skills/axis-deploy/SKILL.md).
+
 ## Code style
 
 Use TypeScript ESM / NodeNext conventions and the strict settings in

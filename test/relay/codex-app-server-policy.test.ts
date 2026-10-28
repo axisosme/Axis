@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PackageLocalCodexAppServerTransport } from "../../src/executor/codex.js";
+import { classifyCodexTurnFailure, PackageLocalCodexAppServerTransport } from "../../src/executor/codex.js";
 import { fakeAppServer } from "../support/codex-app-server.js";
 
 const WORKSPACE = "/tmp/axis-codex-managed-workspace";
@@ -19,7 +19,7 @@ function methodMessage(messages: readonly Record<string, unknown>[], method: str
 
 test("Axis Codex turns run without approvals or an Axis sandbox", async () => {
   const server = fakeAppServer({
-    initialize: { userAgent: "codex-cli/0.153.4", codexHome: "/tmp/axis-codex-home" },
+    initialize: { userAgent: "codex-cli/0.165.0", codexHome: "/tmp/axis-codex-home" },
     "config/read": { config: {} },
   });
   const transport = new PackageLocalCodexAppServerTransport({
@@ -56,7 +56,7 @@ test("Axis Codex turns run without approvals or an Axis sandbox", async () => {
 
 test("successor processes restore the same no-approval full-access Codex policy before continuing", async () => {
   const server = fakeAppServer({
-    initialize: { userAgent: "codex-cli/0.153.4", codexHome: "/tmp/axis-codex-home" },
+    initialize: { userAgent: "codex-cli/0.165.0", codexHome: "/tmp/axis-codex-home" },
     "config/read": { config: {} },
     "thread/resume": { thread: { id: "thread-native-1" } },
   });
@@ -85,4 +85,16 @@ test("successor processes restore the same no-approval full-access Codex policy 
   } finally {
     transport.close();
   }
+});
+
+test("a failed turn's TurnError classifies serverOverloaded as model capacity, with or without its optional members", () => {
+  const failed = (error: Record<string, unknown>) => ({ status: "failed", error });
+  assert.equal(classifyCodexTurnFailure(failed({ message: "busy", codexErrorInfo: "serverOverloaded", additionalDetails: null, misalignment: null })), "model_capacity");
+  assert.equal(classifyCodexTurnFailure(failed({ message: "busy", codexErrorInfo: "serverOverloaded" })), "model_capacity");
+  assert.equal(classifyCodexTurnFailure(failed({ message: "blocked", codexErrorInfo: "serverOverloaded", misalignment: { explanation: "x" } })), "model_capacity");
+  assert.equal(classifyCodexTurnFailure(failed({ message: "other", codexErrorInfo: "other", additionalDetails: null, misalignment: null })), null);
+  assert.equal(classifyCodexTurnFailure(failed({ message: "busy", codexErrorInfo: "serverOverloaded", unexpected: true })), null);
+  assert.equal(classifyCodexTurnFailure(failed({ message: "busy", codexErrorInfo: "serverOverloaded", misalignment: "text" })), null);
+  assert.equal(classifyCodexTurnFailure(failed({ codexErrorInfo: "serverOverloaded" })), null);
+  assert.equal(classifyCodexTurnFailure({ status: "completed", error: { message: "busy", codexErrorInfo: "serverOverloaded" } }), null);
 });

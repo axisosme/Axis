@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { existsSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Validate that test-file paths cited as evidence resolve. Read UTF-8 text directly so binary-detection
@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const sourceRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
 // Missing test citations in these source and documentation roots fail the check.
-const ENFORCED_ROOTS = ["docs", "scripts", "src"];
+const ENFORCED_ROOTS = ["docs", "scripts", "src", ".agents/skills"];
 
 // Report unresolved test-root citations separately from enforced source and documentation citations.
 const REPORTED_ROOTS = ["test"];
@@ -50,6 +50,32 @@ function scan(roots) {
 }
 
 const enforced = scan(ENFORCED_ROOTS);
+
+// Check local Markdown links and section fragments in repository agent instructions
+// alongside evidence citations, including the deployment entry points.
+const markdownFiles = ["README.md", "AGENTS.md", ...filesUnder(join(sourceRoot, ".agents/skills"))
+  .filter((path) => path.endsWith(".md"))];
+let markdownLinks = 0;
+for (const filename of markdownFiles) {
+  const absolute = realpathSync(resolve(sourceRoot, filename));
+  const content = readFileSync(absolute, "utf8");
+  for (const match of content.matchAll(/\[[^\]\n]+\]\(([^\s)]+)\)/gu)) {
+    const target = match[1];
+    if (/^[a-z][a-z0-9+.-]*:/iu.test(target)) continue;
+    markdownLinks += 1;
+    const [path, fragment] = target.split("#");
+    const destination = path === "" ? absolute : resolve(dirname(absolute), decodeURIComponent(path));
+    assert.ok(existsSync(destination), `${filename} links to missing ${target}`);
+    if (!fragment) continue;
+    const headings = readFileSync(destination, "utf8").split("\n")
+      .filter((line) => /^#{1,6} /u.test(line))
+      .map((line) => line.replace(/^#{1,6} /u, "").trim().toLowerCase()
+        .replace(/[^\p{L}\p{N}_\-\s]/gu, "").replace(/\s/gu, "-"));
+    assert.ok(headings.includes(decodeURIComponent(fragment)), `${filename} links to missing section ${target}`);
+  }
+}
+assert.ok(markdownLinks > 0, "no local Markdown links found in agent instructions or entry points");
+process.stdout.write(`Agent documentation link guardrail passed (${markdownLinks} local links and section targets).\n`);
 
 // A scan that read nothing, or that stopped matching the citation shape, would
 // satisfy the assertion below without checking anything -- the exact vacuity

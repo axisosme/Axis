@@ -68,7 +68,7 @@
   "dependencies": {
     "@axisosme/axis-contracts": "0.1.0",
     "@linear/sdk": "95.0.0",
-    "@openai/codex": "0.153.4",
+    "@openai/codex": "0.165.0",
     "graphql": "16.14.2",
     "smol-toml": "1.8.0"
   },
