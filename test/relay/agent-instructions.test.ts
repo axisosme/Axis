@@ -25,7 +25,8 @@ import { currentFixture } from "../helpers.js";
 import { fakeAppServer } from "../support/codex-app-server.js";
 
 const AVAILABLE = { LINEAR_EXECUTION_STATUS: "available", LINEAR_EXECUTION_EXPIRES_AT: "2026-09-17T00:00:00.000Z" } as const;
-const UNAVAILABLE = { LINEAR_EXECUTION_STATUS: "disabled" } as const;
+const UNAVAILABLE = { LINEAR_EXECUTION_STATUS: "unavailable" } as const;
+const DISABLED = { LINEAR_EXECUTION_STATUS: "disabled" } as const;
 
 /** How many times `needle` occurs in `haystack`. `includes` cannot see a second copy. */
 function occurrences(haystack: string, needle: string): number {
@@ -85,8 +86,15 @@ test("an available Run is never also told what to do when its clients are unavai
   assert.ok(!available.includes("Do not describe the clients as missing"));
 
   const unavailable = axisAgentGuidanceSections(UNAVAILABLE, DEFAULT_AGENT_INSTRUCTIONS).join("\n\n");
-  assert.ok(unavailable.includes("this Worker is not configured for Axis Linear execution access"));
+  assert.ok(unavailable.includes("this Run carries no Axis Linear execution authority"));
   assert.ok(!unavailable.includes("LINEAR_EXECUTION_SDK_MODULE"));
+});
+
+test("a Worker without Linear execution access tells its agents nothing about Axis Linear clients", () => {
+  assert.deepEqual(axisAgentGuidanceSections(DISABLED, DEFAULT_AGENT_INSTRUCTIONS), [DEFAULT_SESSION_RESPONSE_GUIDANCE]);
+  const preamble = axisTaskInput("do the thing", "start", DISABLED, DEFAULT_AGENT_INSTRUCTIONS);
+  assert.ok(!preamble.includes("Axis Linear execution clients"));
+  assert.ok(!preamble.includes("Linear CLI"));
 });
 
 test("each rule reaches the agent exactly once", () => {

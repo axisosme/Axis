@@ -43,21 +43,21 @@ export function resolveAgentInstructions(overrides?: AgentInstructionOverrides):
  * delivers it in the start turn's input.
  *
  * `undefined` means the caller injects no Linear environment at all and has
- * nothing truthful to say about it; every status this does describe is read
- * from `LINEAR_EXECUTION_STATUS` in the environment the child actually receives,
- * never from a separate flag that could disagree with it.
+ * nothing truthful to say about it. A Worker without Linear execution access
+ * (`disabled`) says nothing either: its agents have no Axis clients to describe.
+ * Every status this does describe is read from `LINEAR_EXECUTION_STATUS` in the
+ * environment the child actually receives, never from a separate flag that could
+ * disagree with it.
  *
  * Permission to operate on Linear lives here rather than in the session
  * guidance so a Run receives permission to use Axis clients only when its
  * execution environment actually provides them.
  */
 export function linearExecutionClientInstructions(environment: Readonly<Record<string, string | undefined>> | undefined): string | null {
-  if (environment === undefined) return null;
+  if (environment === undefined || environment.LINEAR_EXECUTION_STATUS === "disabled") return null;
   if (environment.LINEAR_EXECUTION_STATUS !== "available") {
     return [
-      environment.LINEAR_EXECUTION_STATUS === "disabled"
-        ? "Axis Linear execution clients are unavailable because this Worker is not configured for Axis Linear execution access."
-        : "Axis Linear execution clients are unavailable because this Run carries no Axis Linear execution authority.",
+      "Axis Linear execution clients are unavailable because this Run carries no Axis Linear execution authority.",
       "Report that exact cause when an Axis Linear execution client is required. Do not describe the clients as missing, uninstalled, logged out, or unreachable; none of those has been observed.",
       "This status does not disable other Linear tools or authentication already configured for the host account; use them only when they are authorized for the task.",
     ].join("\n");
