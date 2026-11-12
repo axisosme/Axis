@@ -90,6 +90,8 @@ export class FakeLinearProvider implements LinearProviderPort {
   exactActivity: { readonly agentSessionId: string; readonly activity: ImmutableLinearActivity } | null = null;
   exactActivityCalls = 0;
   exactComment: ImmutableLinearComment | null = null;
+  /** Further exact Comments, served by ID alongside `exactComment`. */
+  readonly exactComments = new Map<string, ImmutableLinearComment>();
   exactCommentCalls = 0;
   exactCommentFailures = 0;
   exactUserCalls = 0;
@@ -141,8 +143,9 @@ export class FakeLinearProvider implements LinearProviderPort {
       this.exactCommentFailures -= 1;
       throw new RelayError("linear.provider.rejected", "temporary exact-comment fixture failure", 503, true);
     }
-    if (this.exactComment === null || this.exactComment.id !== commentId) throw new Error("linear.provider.comment_unavailable");
-    return this.exactComment;
+    const comment = this.exactComments.get(commentId) ?? (this.exactComment?.id === commentId ? this.exactComment : null);
+    if (comment === null) throw new Error("linear.provider.comment_unavailable");
+    return comment;
   }
   async loadExactIssue(_token: string, issueId: string): Promise<ImmutableLinearIssue> {
     this.exactIssueCalls += 1;

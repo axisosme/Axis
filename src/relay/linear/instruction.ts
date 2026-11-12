@@ -311,7 +311,7 @@ export function stripLinearAppUserMentions(text: string, appUserId: string): str
  */
 export function composeLinearDispatchInstruction(command: string, context: LinearDispatchContext): string {
   const userCommand = stripLinearAppUserMentions(command, context.appUserId).trim();
-  // Threads are one level deep, so the parent is the root unless the source is the root.
+  // Threads are one level deep, so the parent is the session's thread root unless the source is the root.
   const parentCommentId = context.sourceCommentId !== null && context.rootCommentId !== null && context.rootCommentId !== context.sourceCommentId
     ? context.rootCommentId
     : null;
@@ -402,6 +402,28 @@ export async function resolveLinearInstruction(
 }
 
 /**
+ * Whether the exact Comment Linear captured as a created session's root is a
+ * session root Axis may answer in: a top-level Comment on the session's own
+ * Issue and Team, written by the human who started the session. Anything else
+ * is another thread's Comment, so the source Comment does not belong to this
+ * session.
+ */
+function adoptsSessionRoot(
+  root: ImmutableLinearComment,
+  capturedRootCommentId: string,
+  expectedUserId: string,
+  payload: AgentSessionEventPayload,
+): boolean {
+  return root.id === capturedRootCommentId
+    && root.parentId === null
+    && root.issueId === payload.agentSession.issueId
+    && root.teamId === payload.agentSession.issueTeamId
+    && root.isArtificialAgentSessionRoot === false
+    && !root.botAuthored
+    && root.user?.id === expectedUserId;
+}
+
+/**
  * The comment channel (`docs/LINEAR-PROVIDER.md` "Issue-comment invocation").
  *
  * There is no raw `Comment` webhook ingress: a real `AgentSessionEvent` must
@@ -414,7 +436,10 @@ export async function resolveLinearInstruction(
  * 3. provider capability and a live credential;
  * 4. the exact `Comment(id)`, whose ID, issue, Team, and author must all match
  *    the event;
- * 5. the comment's root (`parentId ?? id`) equals the captured session root;
+ * 5. the comment's root (`parentId ?? id`) equals the captured session root --
+ *    or, for a created event from a thread reply, the captured root is a
+ *    distinct top-level Comment by the same creator on the same Issue and Team
+ *    (see `adoptsSessionRoot`), and that Comment becomes the session root;
  * 6. the author is a real, active, non-App, non-bot human;
  * 7. that author is exactly present in a *complete* current Team membership
  *    answer -- an incomplete membership answer is silence, never an approval;
@@ -464,9 +489,26 @@ export async function resolveLinearCommentInvocation(
     || comment.issueId !== payload.agentSession.issueId
     || comment.teamId !== payload.agentSession.issueTeamId
   ) return commentRefusal("linear.comment.identity_mismatch");
-  const rootCommentId = comment.parentId ?? comment.id;
+  let rootCommentId = comment.parentId ?? comment.id;
   if (capturedRootCommentId !== rootCommentId) {
-    return commentRefusal("linear.comment.root_identity_mismatch");
+    // Linear opens a session from a reply inside an existing thread on a new
+    // top-level Comment, so a created event can name a source Comment outside
+    // the thread that the session is rooted on. That root is the session's own
+    // thread: Axis answers there rather than in the thread the human replied in.
+    if (payload.action !== "created" || comment.parentId === null) {
+      return commentRefusal("linear.comment.root_identity_mismatch");
+    }
+    let capturedRoot: ImmutableLinearComment;
+    try {
+      capturedRoot = await readExactLinear(() => context.provider.loadExactComment!(token, capturedRootCommentId, expectedUserId), context.sleep);
+    } catch (error) {
+      if (error instanceof RelayError && error.retryable) throw error;
+      return commentRefusal("linear.comment.provider_unavailable");
+    }
+    if (!adoptsSessionRoot(capturedRoot, capturedRootCommentId, expectedUserId, payload)) {
+      return commentRefusal("linear.comment.root_identity_mismatch");
+    }
+    rootCommentId = capturedRootCommentId;
   }
   if (
     payload.action === "created"

@@ -18,7 +18,7 @@ import {
 } from "../../../src/index.js";
 import { LINEAR_INBOX_LEASE_OWNER, composeLinearChannel, startLinearChannelProcess, type LinearChannel, type LinearChannelProcess } from "../../../src/relay/linear/composition.js";
 import { linearIssueContextStep, LINEAR_CHANNEL_COPY } from "../../../src/relay/linear/channel.js";
-import { LinearGraphQlProvider } from "../../../src/relay/linear/provider.js";
+import { LinearGraphQlProvider, type ImmutableLinearComment } from "../../../src/relay/linear/provider.js";
 import { RelayError, classifyStartupFailure, renderStartupFailure } from "../../../src/relay/errors.js";
 import { linearActivityContent } from "../../../src/relay/linear/delivery.js";
 import { channelInstructionDigest, type ChannelMessageContent } from "../../../src/router/channel-conversation-types.js";
@@ -802,6 +802,97 @@ test("a delegation start whose initial prompt Activity hangs from another Commen
   assert.equal(JSON.stringify(state.activities()).includes("is not the one this session's start named"), true);
   assert.equal(JSON.stringify(state.activities()).includes("could not complete startup validation safely"), false);
   assert.equal(state.executor.bindings.length, 0);
+});
+
+/**
+ * Linear opens a session from a reply inside an existing thread on a NEW top-level
+ * Comment: the event's `sourceCommentId` is the reply (it has a `parentId`) while the
+ * captured `commentId` is that new top-level Comment.
+ */
+function threadReplyMention(state: Harness, overrides: { readonly root?: Partial<ImmutableLinearComment>; readonly sourceParentId?: string | null } = {}): Record<string, unknown> {
+  const mention = JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [
+    { type: "suggestion_userMentions", attrs: { id: APP_USER_ID, label: "axis" } },
+    { type: "text", text: " please retest the quota label" },
+  ] }] });
+  const human = { id: "human-user-fixture", active: true, app: false, url: "https://linear.app/acme/profiles/human-user-fixture" };
+  const comment = (id: string, parentId: string | null): ImmutableLinearComment => ({
+    id, parentId, url: `https://linear.app/acme/issue/DEMO-9#${id}`, body: "@axis please retest the quota label", bodyData: mention,
+    issueId: "issue-fixture", teamId: TEAM_ID, isArtificialAgentSessionRoot: false, user: human, botAuthored: false,
+    member: { id: human.id, active: true, app: false }, membershipComplete: true,
+  });
+  state.provider.exactComments.set("comment-reply", comment("comment-reply", overrides.sourceParentId === undefined ? "comment-thread-root" : overrides.sourceParentId));
+  state.provider.exactComments.set("comment-new-root", { ...comment("comment-new-root", null), ...overrides.root });
+  const payload = currentFixture("agent-session-created.json");
+  return { ...payload, agentSession: { ...(payload.agentSession as object), sourceCommentId: "comment-reply", commentId: "comment-new-root" } };
+}
+
+test("a mention in a thread reply starts the session on the new top-level root Linear captured, and the response comes back", async (context) => {
+  const state = await harness(context);
+  const deliveryId = randomUUID();
+
+  const response = await state.post(threadReplyMention(state), { deliveryId });
+  assert.equal(response.status, 200);
+
+  await waitFor(state, "the thread-reply mention to reach the Worker", () => state.executor.bindings.length === 1);
+  assert.equal(state.provider.exactCommentCalls, 2, "the source reply and the captured root were each exact-read");
+  assert.equal(countOf(state, "error"), 0, "a thread-reply mention is not refused");
+  state.executor.pushSucceeded(binding(state, 0), { sourceEventId: "e2e-thread-reply-final", projectionStatus: "projected", body: "Retest done.", truncated: false, truncations: [] });
+  await waitFor(state, "the response Activity", () => countOf(state, "response") === 1);
+  assert.equal(state.channel.inbox.snapshot(deliveryId)?.state, "completed");
+});
+
+for (const [name, overrides] of [
+  ["written by someone other than the session creator", { root: { user: { id: "someone-else", active: true, app: false, url: "https://linear.app/acme/profiles/someone-else" } } }],
+  ["itself a reply inside another thread", { root: { parentId: "comment-thread-root" } }],
+  ["on a different Issue", { root: { issueId: "issue-other" } }],
+  ["on a different Team", { root: { teamId: "team-other" } }],
+  ["authored by a bot", { root: { botAuthored: true } }],
+] as const) {
+  test(`a thread-reply mention whose captured root is ${name} is quarantined and never reaches the Worker`, async (context) => {
+    const state = await harness(context);
+    const deliveryId = randomUUID();
+
+    const response = await state.post(threadReplyMention(state, overrides), { deliveryId });
+    assert.equal(response.status, 200);
+
+    await waitFor(state, "the mismatched root to be quarantined", () => state.channel.inbox.snapshot(deliveryId)?.state === "quarantined");
+    assert.equal(state.channel.inbox.snapshot(deliveryId)?.failureCode, "linear.comment.root_identity_mismatch");
+    assert.equal(state.executor.bindings.length, 0, "a root that is not this session's own never dispatches");
+  });
+}
+
+test("a source reply whose captured root is its own thread root is unchanged by the adopted-root path", async (context) => {
+  const state = await harness(context);
+  const deliveryId = randomUUID();
+  const payload = threadReplyMention(state);
+
+  const response = await state.post({ ...payload, agentSession: { ...(payload.agentSession as object), commentId: "comment-thread-root" } }, { deliveryId });
+  assert.equal(response.status, 200);
+  await waitFor(state, "the matching-root reply to reach the Worker", () => state.executor.bindings.length === 1);
+  assert.equal(state.provider.exactCommentCalls, 1, "the captured root equals the source's root, so only the source is read");
+});
+
+test("a prompted reply from another thread is still refused as a root mismatch", async (context) => {
+  const state = await harness(context);
+  const created = threadReplyMention(state);
+  await state.post(created);
+  await waitFor(state, "the session to start", () => state.executor.bindings.length === 1);
+
+  const calls = state.provider.exactCommentCalls;
+  state.provider.activities.push({ ...promptActivity("activity-other-thread", "Continue"), sourceCommentId: "comment-reply" });
+  const prompted = currentFixture("agent-session-prompted.json");
+  const deliveryId = randomUUID();
+  const response = await state.post({
+    ...prompted,
+    agentSession: { ...(prompted.agentSession as object), commentId: "comment-new-root" },
+    agentActivity: { id: "activity-other-thread", user: { id: "human-user-fixture" }, sourceCommentId: "comment-reply", body: "Continue", signal: "continue", createdAt: new Date().toISOString() },
+  }, { deliveryId });
+  assert.equal(response.status, 200);
+
+  await waitFor(state, "the cross-thread prompt to be quarantined", () => state.channel.inbox.snapshot(deliveryId)?.state === "quarantined");
+  assert.equal(state.channel.inbox.snapshot(deliveryId)?.failureCode, "linear.comment.root_identity_mismatch");
+  assert.equal(state.provider.exactCommentCalls, calls + 1, "a prompted event never reads the captured root");
+  assert.equal(state.executor.bindings.length, 1, "the cross-thread prompt did not dispatch a second turn");
 });
 
 test("a prompted webhook continues the SAME conversation on the real Worker and its response comes back", async (context) => {
